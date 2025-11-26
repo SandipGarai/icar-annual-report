@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ICAR Annual Report – Login</title>
+
+    <link rel="stylesheet" href="css/styles.css" />
+
+    <!-- Firebase (v9 compat mode) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+    <style>
+      body {
+        background: #f0f5ff;
+        font-family: Arial;
+      }
+      .login-container {
+        width: 100%;
+        max-width: 400px;
+        background: white;
+        margin: 80px auto;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #00336b;
+      }
+      .login-box label {
+        font-size: 14px;
+        color: #333;
+        margin-top: 10px;
+        display: block;
+      }
+      input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border: 1px solid #bbb;
+        border-radius: 6px;
+      }
+      button {
+        width: 100%;
+        padding: 12px;
+        background: #0057d8;
+        color: white;
+        border: none;
+        margin-top: 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:hover {
+        background: #003fb3;
+      }
+      .hidden {
+        display: none;
+      }
+      .status {
+        margin-top: 15px;
+        text-align: center;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="login-container">
+      <h2>ICAR Annual Report Login</h2>
+
+      <div class="login-box">
+        <label>User Name</label>
+        <input type="text" id="userNameInput" placeholder="Enter your name" />
+
+        <label>Mobile Number</label>
+        <input type="text" id="phoneInput" placeholder="+91xxxxxxxxxx" />
+
+        <div id="recaptcha-container"></div>
+
+        <button id="sendOtpBtn">Send OTP</button>
+
+        <div id="otpArea" class="hidden">
+          <label>Enter OTP</label>
+          <input type="text" id="otpInput" />
+          <button id="verifyOtpBtn">Verify OTP</button>
+        </div>
+      </div>
+
+      <div id="loginStatus" class="status"></div>
+    </div>
+
+    <script src="js/login.js"></script>
+  </body>
+</html>

@@ -1,0 +1,202 @@
+<div>
+  <h2 class="section-title">Basic Information (Mandatory)</h2>
+  <p class="section-subtitle">
+    Please fill your institute and faculty details. These will be used as
+    headings in the Annual Report.
+  </p>
+
+  <div class="form-group">
+    <label>Institute Name (Short) <span style="color: #b91c1c">*</span></label>
+    <div class="inline-input">
+      <span class="inline-input-prefix">ICAR-</span>
+      <input
+        type="text"
+        id="instNameInput"
+        placeholder="IIAB"
+        autocomplete="off"
+      />
+    </div>
+    <div class="small-text">
+      Default: <strong>IIAB</strong> → will appear as
+      <strong>ICAR-IIAB</strong>. Input is auto-capitalized.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Faculty Name <span style="color: #b91c1c">*</span></label>
+    <input
+      type="text"
+      id="facultyNameInput"
+      placeholder="Enter name (no Dr., Mr. etc.)"
+      autocomplete="off"
+    />
+    <div class="small-text">
+      Auto-capitalized. Special characters like
+      <code>.,!@#$^&()-_+=;:'"</code> are removed.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Faculty Position / Roles</label>
+    <div class="roles-grid">
+      <!-- You can add/remove options as needed -->
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="Scientist" />
+        <span>Scientist</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="Director" />
+        <span>Director</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="JDR" />
+        <span>JDR</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="JDA" />
+        <span>JDA</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="UG-coordinator" />
+        <span>UG Coordinator</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="PG-coordinator" />
+        <span>PG Coordinator</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="ISP I/C" />
+        <span>ISP I/C</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="SCSP I/C" />
+        <span>SCSP I/C</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="NEH I/C" />
+        <span>NEH I/C</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="MGMG I/C" />
+        <span>MGMG I/C</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="HRD Nodal officer" />
+        <span>HRD Nodal officer</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="ITMU I/C" />
+        <span>ITMU I/C</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="ABI I/C" />
+        <span>ABI I/C</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="CFAO" />
+        <span>CFAO</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="CAO" />
+        <span>CAO</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="AO" />
+        <span>AO</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="AAO" />
+        <span>AAO</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="T1" />
+        <span>T1</span>
+      </label>
+      <label class="roles-chip">
+        <input type="checkbox" name="roleCheckbox" value="Assistant" />
+        <span>Assistant</span>
+      </label>
+      <label class="roles-chip">
+        <input
+          type="checkbox"
+          name="roleCheckbox"
+          value="Works committee and Estate section"
+        />
+        <span>Works committee &amp; Estate</span>
+      </label>
+    </div>
+    <div class="small-text">Multiple roles can be selected.</div>
+  </div>
+
+  <div class="form-grid-2">
+    <div class="form-group">
+      <label
+        >Division / School / Section
+        <span style="color: #b91c1c">*</span></label
+      >
+      <select id="divisionSelect">
+        <option value="">Select division</option>
+        <option value="School of Basic and Social Sciences">
+          School of Basic and Social Sciences
+        </option>
+        <option value="School of Genetics and Molecular Breeding">
+          School of Genetics and Molecular Breeding
+        </option>
+        <option value="School of Bioinformatics and Computational Biology">
+          School of Bioinformatics and Computational Biology
+        </option>
+        <option
+          value="School of Molecular Diagnostics, Prophylactics and Nanobiotechnology"
+        >
+          School of Molecular Diagnostics, Prophylactics and Nanobiotechnology
+        </option>
+        <option value="Administration">Administration</option>
+        <option value="other">Other (specify)</option>
+      </select>
+      <input
+        type="text"
+        id="divisionOtherInput"
+        class="hidden"
+        placeholder="Specify division/school/section"
+      />
+      <div class="small-text">
+        Choose from the list or select "Other" to specify a new name.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Year <span style="color: #b91c1c">*</span></label>
+      <select id="yearSelect"></select>
+      <div class="small-text">
+        Select the reporting year for this annual report.
+      </div>
+    </div>
+  </div>
+
+  <hr style="margin: 20px 0" />
+
+  <h2 class="section-title">Executive Summary</h2>
+  <p class="section-subtitle">
+    Provide a concise executive summary of your annual contribution (maximum 100
+    words).
+  </p>
+
+  <div class="form-group">
+    <label>Executive Summary (max 100 words)</label>
+    <textarea
+      id="execSummaryText"
+      class="cb-textarea"
+      placeholder="Brief summary of key activities, achievements, and highlights for this year..."
+    ></textarea>
+
+    <div class="small-text">
+      Word count: <span id="execSummaryWordCount">0</span> / 100
+    </div>
+  </div>
+
+  <div class="form-group" style="margin-top: 12px">
+    <button id="validateBasicInfoBtn" class="btn btn-primary">
+      ✅ Validate Basic Information
+    </button>
+  </div>
+</div>

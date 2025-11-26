@@ -1,0 +1,186 @@
+<div>
+  <h2 class="section-title">10. Annexures</h2>
+
+  <!-- 10.1 Ongoing Research Projects (Institutional) -->
+  <h3 class="subsection-title">
+    10.1 Ongoing Research Projects (Institutional)
+  </h3>
+  <p class="small-text">
+    Concerned to PI of that particular project. Duration auto-calculated
+    (same-day = 1 day).
+  </p>
+  <button id="addInstProjRow" class="btn btn-secondary">
+    ➕ Add Institutional Project
+  </button>
+  <div id="instProjTable" class="table-container"></div>
+
+  <hr style="margin: 24px 0" />
+
+  <!-- 10.2 Ongoing Research Projects (External) -->
+  <h3 class="subsection-title">10.2 Ongoing Research Projects (External)</h3>
+  <p class="small-text">
+    Same as institutional projects with additional Funding Agency column.
+  </p>
+  <button id="addExtProjRow" class="btn btn-secondary">
+    ➕ Add External Project
+  </button>
+  <div id="extProjTable" class="table-container"></div>
+
+  <hr style="margin: 24px 0" />
+
+  <!-- 10.3 Budget Utilization & Revenue Generation -->
+  <h3 class="subsection-title">
+    10.3 Budget Utilization and Revenue Generation (in lakh rupees)
+  </h3>
+
+  <!-- 10.3.1 Budget Utilization -->
+  <h4 class="subsub-title">10.3.1 Budget Utilization</h4>
+  <p class="small-text">
+    Concerned to CFAO. RE/BE financial year labels are auto-calculated based on
+    the selected report year. Percentages are auto-calculated but editable if
+    needed.
+  </p>
+  <button id="initBudgetTableBtn" class="btn btn-secondary">
+    ↺ Load Default Heads
+  </button>
+  <div
+    id="budgetUtilTable"
+    class="table-container"
+    style="margin-top: 8px"
+  ></div>
+
+  <div class="form-group" style="margin-top: 8px">
+    <label>Footer (e.g., GIA-General (Non-scheme) 1270)</label>
+    <input id="budgetFooterInput" type="text" class="text-input" />
+  </div>
+
+  <div class="form-group" style="margin-top: 8px">
+    <label>Upload alternative budget table (.xlsx) (optional)</label><br />
+    <button id="uploadBudgetXlsx" class="btn add-table-btn">
+      ➕ Upload Budget Table
+    </button>
+    <div id="budgetCustomPreview" style="margin-top: 8px"></div>
+  </div>
+
+  <!-- 10.3.2 Revenue Generation -->
+  <h4 class="subsub-title" style="margin-top: 20px">
+    10.3.2 Revenue Generation
+  </h4>
+  <p class="small-text">
+    Head-wise revenue generation. First row under "Head" is pre-filled as
+    "Revenue generation".
+  </p>
+  <button id="addRevenueRow" class="btn btn-secondary">
+    ➕ Add Revenue Row
+  </button>
+  <div id="revenueTable" class="table-container" style="margin-top: 8px"></div>
+
+  <hr style="margin: 24px 0" />
+
+  <!-- 10.4 Developmental Works -->
+  <h3 class="subsection-title">10.4 Developmental Works</h3>
+  <p class="small-text">
+    Concerned to Works committee, Estate section, scientists and administration.
+    20–40 words per developmental work with relevant figures.
+  </p>
+  <div id="devWorksContainer"></div>
+
+  <hr style="margin: 24px 0" />
+
+  <!-- 10.5 Important Committees -->
+  <h3 class="subsection-title">10.5 Important Committees</h3>
+  <p class="small-text">
+    Concerned to nodal officer or member secretary. 200–250 words per meeting
+    with relevant figures. A table with two columns: (1) Chairman and members,
+    (2) Names of concerned persons with designation.
+  </p>
+  <div id="committeesContainer"></div>
+
+  <hr style="margin: 24px 0" />
+
+  <!-- 10.6 Nodal Officers & Responsibilities -->
+  <h3 class="subsection-title">10.6 Nodal Officers and Responsibilities</h3>
+  <p class="small-text">
+    Concerned to CAO/AO. Default responsibilities may be edited or deleted; more
+    rows may be added.
+  </p>
+  <button id="loadDefaultNodalRows" class="btn btn-secondary">
+    ↺ Load Default Responsibilities
+  </button>
+  <button id="addNodalRow" class="btn btn-secondary">➕ Add Row</button>
+  <div id="nodalTable" class="table-container" style="margin-top: 8px"></div>
+
+  <hr style="margin: 24px 0" />
+
+  <!-- 10.7 Distinguished Visitors -->
+  <h3 class="subsection-title">10.7 Distinguished Visitors</h3>
+  <p class="small-text">
+    Concerned to accompanied faculties. Upload figures with captions mentioning
+    name, designation of visitor and date of visit.
+  </p>
+  <button id="addVisitor" class="btn btn-secondary">
+    ➕ Add Distinguished Visitor
+  </button>
+  <div id="visitorsContainer"></div>
+
+  <hr style="margin: 24px 0" />
+
+  <!-- 10.8 Inauguration of New Facilities -->
+  <h3 class="subsection-title">10.8 Inauguration of New Facilities</h3>
+  <p class="small-text">
+    Concerned to Estate section. Tables and figures with dates, facility name in
+    caption.
+  </p>
+  <button id="addNewFacility" class="btn btn-secondary">
+    ➕ Add New Facility
+  </button>
+  <div id="newFacilitiesContainer"></div>
+
+  <hr style="margin: 24px 0" />
+
+  <!-- 10.9 Infrastructure Development in Progress -->
+  <h3 class="subsection-title">10.9 Infrastructure Development in Progress</h3>
+  <p class="small-text">
+    Concerned to Estate section. Upload figures with captions containing
+    infrastructure name.
+  </p>
+  <button id="addInfraInProgress" class="btn btn-secondary">
+    ➕ Add Infrastructure Work
+  </button>
+  <div id="infraProgressContainer"></div>
+
+  <hr style="margin: 24px 0" />
+
+  <!-- 10.10 Staff Positions / Appointments / Promotions / Transfers / New joining -->
+  <h3 class="subsection-title">
+    10.10 Staff Positions / Appointments / Promotions / Transfers / New joining
+  </h3>
+  <p class="small-text">
+    Concerned to CAO/AO. Separate subsections are created under this. Under
+    each, any comments, tables or figures may be added.
+  </p>
+  <div id="staffPositionsContainer"></div>
+
+  <hr style="margin: 24px 0" />
+
+  <!-- 10.11 Institute in Media -->
+  <h3 class="subsection-title">10.11 Institute in media</h3>
+  <p class="small-text">
+    Concerned to I/C. Provide published paper clippings (figures) with caption
+    as date of publication and publisher.
+  </p>
+  <button id="addMediaItem" class="btn btn-secondary">➕ Add Media Item</button>
+  <div id="mediaContainer"></div>
+
+  <hr style="margin: 24px 0" />
+
+  <!-- 10.12 Other Activities -->
+  <h3 class="subsection-title">10.12 Other activities</h3>
+  <p class="small-text">
+    Concerned to faculty. Remarks with tables and figures.
+  </p>
+  <button id="addOtherActivity" class="btn btn-secondary">
+    ➕ Add Other Activity
+  </button>
+  <div id="otherActivitiesContainer"></div>
+</div>

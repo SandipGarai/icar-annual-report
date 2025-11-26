@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ICAR Annual Report Input System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+
+  <body>
+    <div class="app-shell">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="logo">ICAR&nbsp;Annual Report</div>
+          <div class="sidebar-subtitle">
+            Institute Research Information System
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <button class="nav-item active" data-section="basic-info">
+            0. Basic Information
+          </button>
+          <button class="nav-item" data-section="research-accomplishments">
+            1. Research Accomplishments
+          </button>
+          <button class="nav-item" data-section="academic-activities">
+            2. Academic Activities
+          </button>
+          <button class="nav-item" data-section="outreach-activities">
+            3. Outreach Activities
+          </button>
+          <button
+            class="nav-item"
+            data-section="other-institutional-activities"
+          >
+            4. Other Institutional Activities
+          </button>
+          <button class="nav-item" data-section="training-capacity">
+            5. Training & Capacity Building
+          </button>
+          <button class="nav-item" data-section="conferences-symposia">
+            6. Conferences / Symposia Attended
+          </button>
+          <button class="nav-item" data-section="linkages">
+            7. Linkages & Collaborations
+          </button>
+          <button class="nav-item" data-section="awards-recognition">
+            8. Awards & Recognition
+          </button>
+          <button class="nav-item" data-section="publications">
+            9. Publications
+          </button>
+          <button class="nav-item" data-section="annexures">
+            10. Annexures
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button id="saveDraftBtn" class="btn btn-secondary btn-full">
+            💾 Save Draft
+          </button>
+          <button id="clearDraftBtn" class="btn btn-light btn-full">
+            🗑 Clear Draft
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-area">
+        <header class="main-header">
+          <div>
+            <h1>Annual Report Data Collection</h1>
+            <p class="muted">
+              Drafts are stored locally in this browser. You can safely close
+              and continue later.
+            </p>
+          </div>
+
+          <div class="header-actions">
+            <button id="exportPdfBtn" class="btn btn-outline">
+              ⬇ Export as PDF
+            </button>
+            <button id="submitBtn" class="btn btn-primary">Submit</button>
+          </div>
+        </header>
+
+        <!-- Status / Alerts -->
+        <div id="statusBox" class="alert hidden"></div>
+        <div id="exportLoader" class="alert hidden">
+          Exporting PDF… Please wait
+        </div>
+        <div id="submitLoader" class="alert hidden">
+          Submitting… Please wait
+        </div>
+
+        <section id="content" class="content">
+          <!-- Dynamic section content loaded here -->
+        </section>
+      </main>
+    </div>
+
+    <!-- FIGURE MODAL -->
+    <div id="figureModal" class="modal hidden">
+      <div class="modal-content">
+        <h3>Add Figure</h3>
+
+        <label>Select Image</label>
+        <input type="file" id="figFileInput" accept="image/*" />
+
+        <img id="figPreview" class="modal-img hidden" />
+
+        <label>Caption</label>
+        <input type="text" id="figCaptionInput" />
+
+        <p class="small-text">
+          A citation placeholder like <b>[FIG-1]</b> will be inserted into your
+          text.
+        </p>
+
+        <div class="modal-actions">
+          <button id="figInsertBtn" class="btn btn-primary">
+            Insert Figure
+          </button>
+          <button id="figCancelBtn" class="btn btn-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE MODAL -->
+    <div id="tableModal" class="modal hidden">
+      <div class="modal-content">
+        <h3>Add Table</h3>
+
+        <label>Select Table File (.csv / .xlsx / .xls)</label>
+        <input type="file" id="tblFileInput" accept=".csv,.xlsx,.xls" />
+
+        <div id="tblPreview" class="table-preview"></div>
+
+        <label>Caption</label>
+        <input type="text" id="tblCaptionInput" />
+
+        <p class="small-text">
+          A citation placeholder like <b>[TAB-1]</b> will be inserted into your
+          text.
+        </p>
+
+        <div class="modal-actions">
+          <button id="tblInsertBtn" class="btn btn-primary">
+            Insert Table
+          </button>
+          <button id="tblCancelBtn" class="btn btn-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- PDF + Tables + ZIP (for Annual Report) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+
+    <!-- Base system -->
+    <script src="js/state.js"></script>
+    <script src="js/drafts.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/figures.js"></script>
+    <script src="js/tables.js"></script>
+    <script src="js/date-utils.js"></script>
+
+    <!-- NEW: shared export model -->
+    <!-- <script src="js/export-model.js"></script> -->
+
+    <!-- Section files -->
+    <script src="js/sections.js"></script>
+    <script src="js/basic-info.js"></script>
+    <script src="js/research-accomplishments.js"></script>
+    <script src="js/academic-activities.js"></script>
+    <script src="js/outreach-activities.js"></script>
+    <script src="js/other-institutional-activities.js"></script>
+    <script src="js/training-capacity.js"></script>
+    <script src="js/conferences-symposia.js"></script>
+    <script src="js/linkages.js"></script>
+    <script src="js/awards-recognition.js"></script>
+    <script src="js/publications.js"></script>
+    <script src="js/annexures.js"></script>
+
+    <!-- Core App System -->
+    <script src="js/router.js"></script>
+    <script src="js/main.js"></script>
+
+    <!-- Export + Submit Engine -->
+    <script src="js/submit.js"></script>
+    <script src="js/export-pdf.js"></script>
+  </body>
+</html>
