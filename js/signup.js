@@ -1,29 +1,29 @@
-// login.js
-
-// SAME AUTH_URL
+// signup.js
 const AUTH_URL =
   "https://script.google.com/macros/s/AKfycbz6KBGi69sN1F1zuxh3BVY5CPSN2JIM4IXg3BxLdU0ahrKh89D6SnsQnR_aTregIR_1BA/exec";
 
 document.addEventListener("DOMContentLoaded", () => {
-  const userInput = document.getElementById("loginUser");
-  const passInput = document.getElementById("loginPass");
-  const status = document.getElementById("loginStatus");
-  const loginBtn = document.getElementById("loginBtn");
+  const nameInput = document.getElementById("signupName");
+  const userInput = document.getElementById("signupUser");
+  const passInput = document.getElementById("signupPass");
+  const status = document.getElementById("signupStatus");
+  const btn = document.getElementById("signupBtn");
 
-  loginBtn.onclick = async () => {
+  btn.onclick = async () => {
+    const name = nameInput.value.trim();
     const username = userInput.value.trim();
     const password = passInput.value.trim();
 
     status.style.color = "red";
     status.textContent = "";
 
-    if (!username || !password) {
-      status.textContent = "Enter username and password.";
+    if (!name || !username || !password) {
+      status.textContent = "Please fill all fields.";
       return;
     }
 
     status.style.color = "blue";
-    status.textContent = "Checking...";
+    status.textContent = "Creating account...";
 
     try {
       // Use text/plain to avoid preflight
@@ -31,7 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
         body: JSON.stringify({
-          action: "login",
+          action: "signup",
+          name,
           username,
           password,
         }),
@@ -39,28 +40,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const data = await resp.json();
 
-      if (!data.ok || !data.user) {
+      if (!data.ok) {
         status.style.color = "red";
-        status.textContent = data.message || "Invalid login.";
+        status.textContent = data.message || "Signup failed.";
         return;
       }
 
-      localStorage.setItem(
-        "loggedUser",
-        JSON.stringify({
-          username: data.user.username,
-          fullname: data.user.name,
-          password: data.user.password,
-          createdAt: data.user.createdAt,
-        })
-      );
-
       status.style.color = "green";
-      status.textContent = "Login successful!";
+      status.textContent = "Account created! Redirecting...";
 
       setTimeout(() => {
-        window.location.href = "index.html";
-      }, 500);
+        window.location.href = "login.html";
+      }, 800);
     } catch (err) {
       status.style.color = "red";
       status.textContent = "Network error: " + err.message;

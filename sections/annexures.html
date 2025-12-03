@@ -50,17 +50,45 @@
   ></div>
 
   <div class="form-group" style="margin-top: 8px">
-    <label>Footer (e.g., GIA-General (Non-scheme) 1270)</label>
-    <input id="budgetFooterInput" type="text" class="text-input" />
-  </div>
-
-  <div class="form-group" style="margin-top: 8px">
     <label>Upload alternative budget table (.xlsx) (optional)</label><br />
     <button id="uploadBudgetXlsx" class="btn add-table-btn">
       ➕ Upload Budget Table
     </button>
     <div id="budgetCustomPreview" style="margin-top: 8px"></div>
   </div>
+  <!-- 10.3.1 (A) Other Details -->
+  <h4 class="subsub-title" style="margin-top: 20px">
+    10.3.1 (A) Other Details (optional)
+  </h4>
+
+  <p class="small-text">
+    You may enter additional remarks here, or upload tables and figures relevant
+    to Budget Utilization.
+  </p>
+
+  <!-- Free text field -->
+  <div class="form-group">
+    <textarea
+      id="budgetOtherText"
+      class="text-input"
+      rows="3"
+      placeholder="Type additional information here..."
+    ></textarea>
+  </div>
+
+  <!-- Upload buttons -->
+  <div class="upload-group" style="margin-top: 8px">
+    <button id="addBudgetOtherTable" class="btn add-table-btn">
+      ➕ Add Table
+    </button>
+    <button id="addBudgetOtherFigure" class="btn add-figure-btn">
+      ➕ Add Figure
+    </button>
+  </div>
+
+  <!-- Displays -->
+  <div id="budgetOtherTables" style="margin-top: 10px"></div>
+  <div id="budgetOtherFigures" style="margin-top: 10px"></div>
 
   <!-- 10.3.2 Revenue Generation -->
   <h4 class="subsub-title" style="margin-top: 20px">

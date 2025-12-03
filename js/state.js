@@ -1,47 +1,63 @@
 // js/state.js
 
+// Global AppState
 window.AppState = {
   meta: {
     submissionId: null,
     lastSavedAt: null,
   },
+
+  // -------------------------------------------------
+  // BASIC INFO (canonical source)
+  // -------------------------------------------------
   basic_info: {
-    institute_name_short: "ICAR-IIAB",
+    institute_name_short: "IIAB",
     faculty_name: "",
     roles: [],
     division: {
-      type: "predefined",
-      value: "",
-      other_text: "",
+      type: "predefined", // "predefined" or "other"
+      value: "", // e.g., "Crop Improvement"
+      other_text: "", // text when type = "other"
     },
     year: new Date().getFullYear(),
     executive_summary: "",
   },
+
   sections: {
+    // -------------------------------------------------
+    // UI-bound shadow copy for basic-info screen
+    // -------------------------------------------------
     "basic-info": {
       instName: "",
       facultyName: "",
       roles: [],
-      division: "",
-      divisionOther: "",
+      division: {
+        type: "predefined",
+        value: "",
+        other_text: "",
+      },
       year: new Date().getFullYear(),
-      text: "", // for 50–100 words summary
-      execSummary: "", // Executive summary moved inside basic info
+      text: "",
+      execSummary: "",
     },
-    research_accomplishments: [],
+
+    // -------------------------------------------------
+    // IMPORTANT — DIVISION BASED RESEARCH MODEL
+    // MUST be an object, NOT an array
+    // -------------------------------------------------
+    research_accomplishments: {
+      // dynamically created keys:
+      // "Crop Improvement": [],
+      // "Crop Production": [],
+      // "Other": [],
+    },
+
     academic_activities: [],
     outreach_activities: [],
+
     other_institutional_activities: {
-      itmu: {
-        text: "",
-        tables: [],
-        figures: [],
-      },
-      abi: {
-        text: "",
-        tables: [],
-        figures: [],
-      },
+      itmu: { text: "", tables: [], figures: [] },
+      abi: { text: "", tables: [], figures: [] },
       meetings: [
         {
           id: "qrt",
@@ -66,22 +82,24 @@ window.AppState = {
         },
       ],
     },
+
     training_capacity_building: {
       note: "",
-      trainings_organized: [], // table rows
-      events_attended: [], // table rows
+      trainings_organized: [],
+      events_attended: [],
     },
 
-    conferences_symposia: {
-      attended: [], // table rows
-    },
+    conferences_symposia: { attended: [] },
+
     linkages: {
       collaborations: [],
     },
+
     awards_recognition: {
       awards: [],
       recognitions: [],
     },
+
     publications: {
       categories: {
         research_papers: [],
@@ -95,65 +113,73 @@ window.AppState = {
         other: [],
       },
     },
-    annexures: {
-      // 10.1 Ongoing Research Projects (Institutional)
-      institutional_projects: [],
 
-      // 10.2 Ongoing Research Projects (External)
+    annexures: {
+      institutional_projects: [],
       external_projects: [],
 
-      // 10.3 Budget Utilization & Revenue Generation
       budget_utilization: {
-        rows: [], // main ICAR heads table
-        custom_table: null, // optional uploaded .xlsx (rows+name)
-        footer: "GIA-General (Non-scheme) 1270",
-      },
-      revenue_generation: {
-        rows: [], // simple table
+        rows: [],
+        custom_table: null,
+        other_details: {
+          text: "",
+          tables: [],
+          figures: [],
+        },
       },
 
-      // 10.4 Developmental Works
+      revenue_generation: { rows: [] },
+
       developmental_works: {
-        lab: [], // [{text, figures:[]}]
+        lab: [],
         farm: [],
         infrastructure: [],
         other: [],
       },
 
-      // 10.5 Important Committees
       committees: {
-        qrt: { text: "", members: [] }, // members: [{role, names}]
+        qrt: { text: "", members: [] },
         rac: { text: "", members: [] },
         imc: { text: "", members: [] },
         irc: { text: "", members: [] },
         other: { text: "", members: [] },
       },
 
-      // 10.6 Nodal Officers & Responsibilities
-      nodal_officers: {
-        rows: [], // [{responsibility, officer}]
-      },
+      nodal_officers: { rows: [] },
 
-      // 10.7 Distinguished Visitors etc.
-      distinguished_visitors: [], // [{name, designation, date, figures:[]}]
-      new_facilities: [], // [{facility, date, note, tables:[], figures:[]}]
-      infra_in_progress: [], // [{name, note, figures:[]}]
+      distinguished_visitors: [],
+      new_facilities: [],
+      infra_in_progress: [],
+
       staff_positions: {
-        appointments: [], // [{note, tables:[], figures:[]}]
+        appointments: [],
         promotions: [],
         transfers: [],
         new_joining: [],
       },
-      institute_in_media: [], // [{date, publisher, note, figures:[]}]
-      other_activities: [], // [{note, tables:[], figures:[]}]
+
+      institute_in_media: [],
+      other_activities: [],
     },
   },
+
   local_counters: {
     figure: 0,
     table: 0,
   },
 };
 
+// -------------------------------------------------
+// SAFE deep clone for draft-saving
+// -------------------------------------------------
 window.cloneAppState = function () {
+  if (window.structuredClone) return structuredClone(window.AppState);
   return JSON.parse(JSON.stringify(window.AppState));
 };
+
+// -------------------------------------------------
+// GLOBAL FLAGS
+// -------------------------------------------------
+window.__draftLoaded = false;
+// Means: "basic_info + sections['basic-info'] are initialised/synced"
+window.__basicInfoReady = false;

@@ -3,7 +3,7 @@
  **********************************************************/
 
 const SUBMIT_ENDPOINT =
-  "https://script.google.com/macros/s/AKfycbyw8VA8G_hmSIfFJxhXVYHS83F-cDTv-L3jnvJixjC7yBJdVmSSZ3gS1OlvVpHANbS0/exec";
+  "https://script.google.com/macros/s/AKfycbzEXC53wLM5M8nbhkPVgwL-4VlMPuF_yCxZbFrxmOVN-QFcUGIK3C5Yzd_ly5_Y4pp5/exec";
 
 /*********************************************************
  * 1. SAVE DRAFT

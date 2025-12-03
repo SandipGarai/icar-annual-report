@@ -226,6 +226,7 @@ function validateSection(sectionKey, sectionData) {
 
 /******************************************************
  * VALIDATION FOR FULL SUBMISSION (All Sections)
+ * NOTE: Year validation removed as it auto-fills
  ******************************************************/
 function validateAllSections() {
   const errors = [];

@@ -272,11 +272,10 @@ function initAnnexuresSection() {
   // =====================================
 
   const budgetDiv = document.getElementById("budgetUtilTable");
-  const budgetFooterInput = document.getElementById("budgetFooterInput");
   const budgetCustomContainer = document.getElementById("budgetCustomPreview");
 
   if (!state.budget_utilization) {
-    state.budget_utilization = { rows: [], footer: "", custom_tables: [] };
+    state.budget_utilization = { rows: [], footer: {}, custom_tables: [] };
   }
   if (!Array.isArray(state.budget_utilization.rows)) {
     state.budget_utilization.rows = [];
@@ -290,98 +289,63 @@ function initAnnexuresSection() {
     };
   }
 
-  budgetFooterInput.value =
-    state.budget_utilization.footer || "GIA-General (Non-scheme) 1270";
-  budgetFooterInput.addEventListener("input", (e) => {
-    state.budget_utilization.footer = e.target.value;
-  });
+  // ===================================================
+  // SMART CALC HELPERS (NO RERENDER WHILE TYPING)
+  // ===================================================
 
-  function loadDefaultBudgetRows() {
-    state.budget_utilization.rows = [
-      {
-        head: "GIA General, Other than NEH TSP & SCSP",
-        re: "",
-        exp: "",
-        exp_pct: "",
-        be: "",
-        upto: "",
-        upto_pct: "",
-      },
-      {
-        head: "GIA Capital, Other than NEH TSP & SCSP",
-        re: "",
-        exp: "",
-        exp_pct: "",
-        be: "",
-        upto: "",
-        upto_pct: "",
-      },
-      {
-        head: "GIA General, NEH",
-        re: "",
-        exp: "",
-        exp_pct: "",
-        be: "",
-        upto: "",
-        upto_pct: "",
-      },
-      {
-        head: "GIA Capital, NEH",
-        re: "",
-        exp: "",
-        exp_pct: "",
-        be: "",
-        upto: "",
-        upto_pct: "",
-      },
-      {
-        head: "GIA General, TSP",
-        re: "",
-        exp: "",
-        exp_pct: "",
-        be: "",
-        upto: "",
-        upto_pct: "",
-      },
-      {
-        head: "GIA Capital, TSP",
-        re: "",
-        exp: "",
-        exp_pct: "",
-        be: "",
-        upto: "",
-        upto_pct: "",
-      },
-      {
-        head: "GIA General, SCSP",
-        re: "",
-        exp: "",
-        exp_pct: "",
-        be: "",
-        upto: "",
-        upto_pct: "",
-      },
-      {
-        head: "GIA Capital, SCSP",
-        re: "",
-        exp: "",
-        exp_pct: "",
-        be: "",
-        upto: "",
-        upto_pct: "",
-      },
-      {
-        head: "Total",
-        re: "",
-        exp: "",
-        exp_pct: "",
-        be: "",
-        upto: "",
-        upto_pct: "",
-      },
-    ];
-    renderBudget();
+  function updateBudgetRow(row) {
+    const re = parseFloat(row.re) || 0;
+    const exp = parseFloat(row.exp) || 0;
+    const upto = parseFloat(row.upto) || 0;
+    const be = parseFloat(row.be) || 0;
+
+    row.exp_pct = re > 0 ? ((exp / re) * 100).toFixed(2) : "";
+    row.upto_pct = be > 0 ? ((upto / be) * 100).toFixed(2) : "";
   }
+
+  function updateBudgetTotals() {
+    let sumRE = 0,
+      sumExp = 0,
+      sumUpto = 0,
+      sumBE = 0;
+
+    const rows = state.budget_utilization.rows;
+    const totalRow = rows.find((r) => r.head?.toLowerCase() === "total");
+
+    rows.forEach((r) => {
+      if (!r || r.head?.toLowerCase() === "total") return;
+      sumRE += parseFloat(r.re) || 0;
+      sumExp += parseFloat(r.exp) || 0;
+      sumUpto += parseFloat(r.upto) || 0;
+      sumBE += parseFloat(r.be) || 0;
+    });
+
+    if (totalRow) {
+      totalRow.re = sumRE.toFixed(2);
+      totalRow.exp = sumExp.toFixed(2);
+      totalRow.upto = sumUpto.toFixed(2);
+      totalRow.be = sumBE.toFixed(2);
+
+      const nonTotals = rows.filter(
+        (r) => r && r.head?.toLowerCase() !== "total"
+      );
+
+      const avgExpPct =
+        nonTotals.reduce((a, r) => a + (parseFloat(r.exp_pct) || 0), 0) /
+        nonTotals.length;
+
+      const avgUptoPct =
+        nonTotals.reduce((a, r) => a + (parseFloat(r.upto_pct) || 0), 0) /
+        nonTotals.length;
+
+      totalRow.exp_pct = avgExpPct.toFixed(2);
+      totalRow.upto_pct = avgUptoPct.toFixed(2);
+    }
+  }
+
+  // ===================================================
+  // RENDER FUNCTION
+  // ===================================================
 
   function renderBudget() {
     budgetDiv.innerHTML = "";
@@ -404,10 +368,6 @@ function initAnnexuresSection() {
       </tr>
     `;
 
-    let sumRE = 0;
-    let sumExp = 0;
-    let sumUpto = 0;
-
     state.budget_utilization.rows.forEach((row, idx) => {
       if (!row) state.budget_utilization.rows[idx] = row = {};
       row.head = row.head || "";
@@ -417,26 +377,6 @@ function initAnnexuresSection() {
       row.be = row.be || "";
       row.upto = row.upto || "";
       row.upto_pct = row.upto_pct || "";
-
-      const isTotal =
-        typeof row.head === "string" && row.head.toLowerCase() === "total";
-
-      if (!isTotal) {
-        const reVal = parseFloat(row.re) || 0;
-        const expVal = parseFloat(row.exp) || 0;
-        const upVal = parseFloat(row.upto) || 0;
-
-        sumRE += reVal;
-        sumExp += expVal;
-        sumUpto += upVal;
-
-        if (reVal && expVal) {
-          row.exp_pct = ((reVal * 100) / expVal).toFixed(2);
-        }
-        if (upVal && expVal) {
-          row.upto_pct = ((upVal * 100) / expVal).toFixed(2);
-        }
-      }
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -452,32 +392,55 @@ function initAnnexuresSection() {
 
       const inputs = tr.querySelectorAll("td input");
 
-      inputs[0].addEventListener("input", (e) => {
-        row.head = e.target.value;
-      });
+      // Head
+      inputs[0].addEventListener("input", (e) => (row.head = e.target.value));
+
+      // RE
       inputs[1].addEventListener("input", (e) => {
         row.re = e.target.value;
-        renderBudget();
+        updateBudgetRow(row);
+        updateBudgetTotals();
       });
+      inputs[1].addEventListener("blur", renderBudget);
+
+      // EXP
       inputs[2].addEventListener("input", (e) => {
         row.exp = e.target.value;
-        renderBudget();
+        updateBudgetRow(row);
+        updateBudgetTotals();
       });
-      inputs[3].addEventListener("input", (e) => {
-        row.exp_pct = e.target.value;
-      });
+      inputs[2].addEventListener("blur", renderBudget);
+
+      // EXP %
+      inputs[3].addEventListener(
+        "input",
+        (e) => (row.exp_pct = e.target.value)
+      );
+
+      // BE (Fix for taking multi digits)
       inputs[4].addEventListener("input", (e) => {
         row.be = e.target.value;
+        updateBudgetRow(row);
+        updateBudgetTotals();
       });
+      inputs[4].addEventListener("blur", renderBudget);
+
+      // UPTO
       inputs[5].addEventListener("input", (e) => {
         row.upto = e.target.value;
-        renderBudget();
+        updateBudgetRow(row);
+        updateBudgetTotals();
       });
-      inputs[6].addEventListener("input", (e) => {
-        row.upto_pct = e.target.value;
-      });
+      inputs[5].addEventListener("blur", renderBudget);
 
-      tr.cells[7].querySelector(".del").addEventListener("click", () => {
+      // Upto %
+      inputs[6].addEventListener(
+        "input",
+        (e) => (row.upto_pct = e.target.value)
+      );
+
+      // Delete row
+      tr.querySelector(".del").addEventListener("click", () => {
         if (!confirm("Delete this row?")) return;
         state.budget_utilization.rows.splice(idx, 1);
         renderBudget();
@@ -486,35 +449,6 @@ function initAnnexuresSection() {
       tbody.appendChild(tr);
     });
 
-    const totalRow = state.budget_utilization.rows.find(
-      (r) => r && typeof r.head === "string" && r.head.toLowerCase() === "total"
-    );
-
-    if (totalRow) {
-      totalRow.re = sumRE ? sumRE.toFixed(2) : "";
-      totalRow.exp = sumExp ? sumExp.toFixed(2) : "";
-      totalRow.upto = sumUpto ? sumUpto.toFixed(2) : "";
-
-      const nonTotalRows = state.budget_utilization.rows.filter(
-        (r) => r && r.head && r.head.toLowerCase() !== "total"
-      );
-      if (nonTotalRows.length) {
-        const avgExpPct =
-          nonTotalRows.reduce(
-            (acc, r) => acc + (parseFloat(r.exp_pct) || 0),
-            0
-          ) / nonTotalRows.length;
-        const avgUptoPct =
-          nonTotalRows.reduce(
-            (acc, r) => acc + (parseFloat(r.upto_pct) || 0),
-            0
-          ) / nonTotalRows.length;
-
-        totalRow.exp_pct = avgExpPct.toFixed(2);
-        totalRow.upto_pct = avgUptoPct.toFixed(2);
-      }
-    }
-
     table.appendChild(thead);
     table.appendChild(tbody);
     budgetDiv.appendChild(table);
@@ -522,8 +456,25 @@ function initAnnexuresSection() {
 
   document
     .getElementById("initBudgetTableBtn")
-    .addEventListener("click", loadDefaultBudgetRows);
+    .addEventListener("click", () => {
+      state.budget_utilization.rows = [
+        { head: "GIA General, Other than NEH TSP & SCSP" },
+        { head: "GIA Capital, Other than NEH TSP & SCSP" },
+        { head: "GIA General, NEH" },
+        { head: "GIA Capital, NEH" },
+        { head: "GIA General, TSP" },
+        { head: "GIA Capital, TSP" },
+        { head: "GIA General, SCSP" },
+        { head: "GIA Capital, SCSP" },
+        { head: "Total" },
+      ];
 
+      renderBudget();
+    });
+
+  renderBudget();
+
+  // custom tables unchanged
   function renderBudgetCustomTables() {
     if (!budgetCustomContainer) return;
     budgetCustomContainer.innerHTML = "";
@@ -536,8 +487,62 @@ function initAnnexuresSection() {
     openTableModal(state.budget_utilization._tableBlock, budgetCustomContainer);
   });
 
-  renderBudget();
   renderBudgetCustomTables();
+  // =====================================
+  // 10.3.1 (A) Other Details
+  // =====================================
+
+  if (!state.budget_utilization.other_details) {
+    state.budget_utilization.other_details = {
+      text: "",
+      tables: [],
+      figures: [],
+    };
+  }
+
+  const otherText = document.getElementById("budgetOtherText");
+  const otherTableDiv = document.getElementById("budgetOtherTables");
+  const otherFigureDiv = document.getElementById("budgetOtherFigures");
+
+  otherText.value = state.budget_utilization.other_details.text || "";
+
+  otherText.addEventListener("input", (e) => {
+    state.budget_utilization.other_details.text = e.target.value;
+  });
+
+  // Render tables
+  function renderOtherTables() {
+    otherTableDiv.innerHTML = "";
+    state.budget_utilization.other_details.tables.forEach((tbl) => {
+      renderTableCard(tbl, otherTableDiv);
+    });
+  }
+
+  // Render figures
+  function renderOtherFigures() {
+    otherFigureDiv.innerHTML = "";
+    state.budget_utilization.other_details.figures.forEach((fig) => {
+      renderFigureCard(fig, otherFigureDiv);
+    });
+  }
+
+  // Add Table
+  document
+    .getElementById("addBudgetOtherTable")
+    .addEventListener("click", () => {
+      openTableModal(state.budget_utilization.other_details, otherTableDiv);
+    });
+
+  // Add Figure
+  document
+    .getElementById("addBudgetOtherFigure")
+    .addEventListener("click", () => {
+      openFigureModal(state.budget_utilization.other_details, otherFigureDiv);
+    });
+
+  // Initial render
+  renderOtherTables();
+  renderOtherFigures();
 
   // =====================================
   // 10.3.2 Revenue Generation

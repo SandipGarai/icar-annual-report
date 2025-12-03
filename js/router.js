@@ -79,6 +79,7 @@ function initSimplePlaceholder(text) {
     box.textContent = text;
   }
 }
+
 // ------------------------------------
 // FIX: Define global Router wrapper
 // ------------------------------------

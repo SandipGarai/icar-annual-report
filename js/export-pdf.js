@@ -350,6 +350,16 @@ async function renderSectionTables(doc, tables, state, sectionLabel) {
   }
 }
 
+// ---------------------------------
+// Budget Table column names dynamic
+// ---------------------------------
+function getBudgetYearLabels() {
+  const year = getYear(); // E.g., 2025
+  const prevFY = `${year - 1}-${String(year).slice(2)}`;
+  const currFY = `${year}-${String(year + 1).slice(2)}`;
+  return { prevFY, currFY };
+}
+
 // -------------------------------
 // Section 0 – Basic Information
 // -------------------------------
@@ -369,14 +379,29 @@ async function renderBasicInfoSection(doc, state) {
 
   writeSectionTitle(doc, "0. Basic Information", state, true);
 
+  // Figure out readable division name (supports both old & new formats)
+  let divisionLabel = "";
+
+  // New structured format: { type, value, other_text }
+  if (b0.division && typeof b0.division === "object") {
+    if (b0.division.type === "other") {
+      divisionLabel = b0.division.other_text || "Other";
+    } else {
+      divisionLabel = b0.division.value || "";
+    }
+  }
+  // Old format fallback: plain string + divisionOther
+  else if (typeof b0.division === "string") {
+    divisionLabel = b0.division;
+    if (b0.division === "Other" && b0.divisionOther) {
+      divisionLabel += ` (${b0.divisionOther})`;
+    }
+  }
+
   const lines = [
     `Institute: ${bi.institute_name_short || b0.instName || ""}`,
     `Faculty Name: ${bi.faculty_name || b0.facultyName || ""}`,
-    `Division: ${b0.division || ""}${
-      b0.division === "Other" && b0.divisionOther
-        ? " (" + b0.divisionOther + ")"
-        : ""
-    }`,
+    `Division: ${divisionLabel}`,
     `Year: ${bi.year || b0.year || getYear()}`,
   ];
 
@@ -394,66 +419,112 @@ async function renderBasicInfoSection(doc, state) {
 // -------------------------------
 // Section 1 – Research Accomplishments
 // -------------------------------
-async function renderResearchSection(doc, state) {
-  const arr = AppState.sections.research_accomplishments;
-  if (!Array.isArray(arr)) return;
+// Helper funtion
+async function renderResearchFlat(doc, state, arr) {
+  const projectsWithContent = arr.filter((proj) =>
+    (proj.subheadings || []).some((s) =>
+      (s.blocks || []).some((b) => hasBlockContent(b))
+    )
+  );
 
-  // Filter out projects & subheadings with no content
-  const projectsWithContent = arr
-    .map((proj) => {
-      const subFiltered = (proj.subheadings || [])
-        .map((sub) => {
-          const blocks = (sub.blocks || []).filter(hasBlockContent);
-          if (!blocks.length && !hasText(sub.title)) return null;
-          return { ...sub, blocks };
-        })
-        .filter(Boolean);
-
-      const hasProjTitle = hasText(proj.project_title);
-      if (!subFiltered.length && !hasProjTitle) return null;
-
-      return { ...proj, subheadings: subFiltered };
-    })
-    .filter(Boolean);
-
-  if (!projectsWithContent.length) return; // skip whole section
+  if (!projectsWithContent.length) return;
 
   writeSectionTitle(doc, "1. Research Accomplishments", state, false);
 
-  const sectionFigures = [];
-  const sectionTables = [];
+  const figs = [];
+  const tabs = [];
 
   projectsWithContent.forEach((proj, pIdx) => {
-    const title = proj.project_title || `Project ${pIdx + 1}`;
-    writeSubheading(doc, `1.${pIdx + 1} ${title}`, state);
+    writeSubheading(doc, `1.${pIdx + 1} ${proj.project_title}`, state);
 
     (proj.subheadings || []).forEach((sub, sIdx) => {
-      const stitle = sub.title || `Subheading ${sIdx + 1}`;
-      writeSubheading(doc, stitle, state);
+      writeSubheading(doc, sub.title || `Subheading ${sIdx + 1}`, state);
 
       (sub.blocks || []).forEach((blk) => {
-        const text = replaceFigureTableRefs(blk.text || "");
-        state.cursorY = writeParagraph(doc, text, state);
+        const txt = replaceFigureTableRefs(blk.text || "");
+        state.cursorY = writeParagraph(doc, txt, state);
+        (blk.figures || []).forEach((f) => figs.push(f));
+        (blk.tables || []).forEach((t) => tabs.push(t));
+      });
+    });
+  });
 
-        if (Array.isArray(blk.figures)) {
-          blk.figures.forEach((f) => sectionFigures.push(f));
+  await renderSectionFigures(doc, figs, state, "Research Accomplishments");
+  await renderSectionTables(doc, tabs, state, "Research Accomplishments");
+}
+
+async function renderResearchSection(doc, state) {
+  const data = AppState.sections.research_accomplishments;
+
+  if (!data || typeof data !== "object") return;
+
+  const divisions = Object.keys(data).filter(
+    (key) => Array.isArray(data[key]) && data[key].length > 0
+  );
+
+  if (!divisions.length) return;
+
+  writeSectionTitle(doc, "1. Research Accomplishments", state, false);
+
+  const globalFigures = [];
+  const globalTables = [];
+
+  // Loop through each division
+  divisions.forEach((div, dIndex) => {
+    const projects = data[div];
+
+    // Division heading
+    writeSubheading(doc, `1.${dIndex + 1} ${div}`, state);
+
+    projects.forEach((proj, pIndex) => {
+      // Project title
+      const projTitle =
+        proj.project_title?.trim() || `Project ${dIndex + 1}.${pIndex + 1}`;
+
+      writeSubheading(doc, `1.${dIndex + 1}.${pIndex + 1} ${projTitle}`, state);
+
+      // If no subheadings → still print something
+      if (!proj.subheadings || proj.subheadings.length === 0) {
+        state.cursorY = writeParagraph(doc, "(No subheadings added)", state);
+        return;
+      }
+
+      // Subheadings
+      proj.subheadings.forEach((sub, sIndex) => {
+        const subTitle = sub.title?.trim() || `Subheading ${sIndex + 1}`;
+
+        writeSubheading(
+          doc,
+          `1.${dIndex + 1}.${pIndex + 1}.${sIndex + 1} ${subTitle}`,
+          state
+        );
+
+        if (!sub.blocks || sub.blocks.length === 0) {
+          state.cursorY = writeParagraph(doc, "(No content added)", state);
+          return;
         }
-        if (Array.isArray(blk.tables)) {
-          blk.tables.forEach((t) => sectionTables.push(t));
-        }
+
+        // Blocks inside subheading
+        sub.blocks.forEach((blk) => {
+          const txt = replaceFigureTableRefs(blk.text || "");
+          state.cursorY = writeParagraph(doc, txt, state);
+
+          (blk.figures || []).forEach((f) => globalFigures.push(f));
+          (blk.tables || []).forEach((t) => globalTables.push(t));
+        });
       });
     });
   });
 
   await renderSectionFigures(
     doc,
-    sectionFigures,
+    globalFigures,
     state,
     "Research Accomplishments"
   );
   await renderSectionTables(
     doc,
-    sectionTables,
+    globalTables,
     state,
     "Research Accomplishments"
   );
@@ -1060,15 +1131,18 @@ async function renderAnnexuresSection(doc, state) {
 
     if (hasArrayContent(sec.budget_utilization.rows)) {
       const rows = sec.budget_utilization.rows;
+      const { prevFY, currFY } = getBudgetYearLabels();
+
       const header = [
         "Head",
-        "RE",
-        "Total Expenditure",
-        "Total Expenditure (%)",
-        "BE",
-        "Upto 31-12",
-        "Upto 31-12 (%)",
+        `RE (${prevFY})`,
+        `Total Expenditure (${prevFY})`,
+        `Total Expenditure (%)`,
+        `BE (${currFY})`,
+        `Total Expenditure Upto 31-12-${prevFY.split("-")[1]}`,
+        `Total Expenditure Upto 31-12-${prevFY.split("-")[1]} (%)`,
       ];
+
       const body = rows.map((r) => [
         r.head || "",
         r.re || "",
@@ -1109,11 +1183,44 @@ async function renderAnnexuresSection(doc, state) {
       );
       renderXlsxTable(doc, sec.budget_utilization.custom_table.rows, state);
     }
-
-    if (hasText(sec.budget_utilization.footer)) {
-      state.cursorY = writeParagraph(doc, sec.budget_utilization.footer, state);
-    }
   }
+
+  // ---------------------------
+  // 10.3.1 (A) Other Details
+  // ---------------------------
+  const od = sec.budget_utilization.other_details;
+
+  if (
+    od &&
+    (hasText(od.text) ||
+      hasArrayContent(od.tables) ||
+      hasArrayContent(od.figures))
+  ) {
+    writeSubheading(doc, "10.3.1 (A) Other Details", state);
+
+    // TEXT
+    if (hasText(od.text)) {
+      state.cursorY = writeParagraph(
+        doc,
+        replaceFigureTableRefs(od.text),
+        state
+      );
+    }
+
+    // TABLES
+    (od.tables || []).forEach((tbl) => {
+      sectionTables.push(tbl); // defer to global table renderer
+    });
+
+    // FIGURES
+    (od.figures || []).forEach((fig) => {
+      sectionFigures.push(fig); // defer to global figure renderer
+    });
+  }
+
+  // ---------------------------
+  // 10.3.2 Revenue Generation
+  // ---------------------------
 
   if (sec.revenue_generation && hasArrayContent(sec.revenue_generation.rows)) {
     writeSubheading(doc, "10.3.2 Revenue Generation", state);

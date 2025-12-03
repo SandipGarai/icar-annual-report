@@ -59,7 +59,6 @@ function addFigure(targetList, refreshFn) {
     { figures: targetList },
     {
       appendChild: () => {
-        // after modal insertion
         refreshFn();
       },
     }
@@ -78,30 +77,99 @@ function addTable(targetList, refreshFn) {
   );
 }
 
+// ---------------- DEFAULT MEETINGS ----------------
+function getDefaultMeetings() {
+  return [
+    {
+      id: "qrt",
+      title: "Quinquennial Review Team (QRT) Meeting",
+      text: "",
+      tables: [],
+      figures: [],
+    },
+    {
+      id: "rac",
+      title: "Research Advisory Committee (RAC) Meeting",
+      text: "",
+      tables: [],
+      figures: [],
+    },
+    {
+      id: "irc",
+      title: "Institute Research Council (IRC) Meeting",
+      text: "",
+      tables: [],
+      figures: [],
+    },
+  ];
+}
+
 // ----------------------------------------------------------
-// INITIALIZER
+// INITIALIZER (FIXED)
 // ----------------------------------------------------------
 function initOtherInstitActivities() {
-  const state = AppState.sections.other_institutional_activities;
+  // Get state
+  let state = AppState.sections.other_institutional_activities;
 
-  // Ensure arrays
+  // --------------------------------------------------------
+  // SAFETY: if draft was cleared or state is missing, rebuild structure
+  // --------------------------------------------------------
+  if (!state || typeof state !== "object") {
+    AppState.sections.other_institutional_activities = {
+      itmu: { text: "", tables: [], figures: [] },
+      abi: { text: "", tables: [], figures: [] },
+      meetings: getDefaultMeetings(),
+    };
+    state = AppState.sections.other_institutional_activities;
+  }
+
+  // Ensure sub-objects exist
+  if (!state.itmu || typeof state.itmu !== "object") {
+    state.itmu = { text: "", tables: [], figures: [] };
+  }
+
+  if (!state.abi || typeof state.abi !== "object") {
+    state.abi = { text: "", tables: [], figures: [] };
+  }
+
+  // Ensure meetings array exists
+  if (!Array.isArray(state.meetings)) {
+    state.meetings = getDefaultMeetings();
+  }
+
+  // If meetings array is empty, add defaults
+  if (state.meetings.length === 0) {
+    state.meetings = getDefaultMeetings();
+  }
+
+  // Ensure arrays in itmu and abi
   state.itmu.figures = safeArray(state.itmu.figures);
   state.itmu.tables = safeArray(state.itmu.tables);
   state.abi.figures = safeArray(state.abi.figures);
   state.abi.tables = safeArray(state.abi.tables);
-  state.meetings.forEach((m) => {
-    m.figures = safeArray(m.figures);
-    m.tables = safeArray(m.tables);
-  });
+
+  // Rebuild meeting objects safely and ensure arrays
+  state.meetings = state.meetings.map((m) => ({
+    id: m.id || "m_" + Date.now(),
+    title: m.title || "Untitled Meeting",
+    text: m.text || "",
+    tables: safeArray(m.tables),
+    figures: safeArray(m.figures),
+  }));
 
   // --------------------------------------------------------
   // ITMU
   // --------------------------------------------------------
   const itmuText = document.getElementById("itmuText");
   const itmuWords = document.getElementById("itmuWords");
-  itmuText.value = state.itmu.text;
-  setupWordCounter(itmuText, itmuWords, OA_MAX_WORDS);
 
+  if (!itmuText || !itmuWords) {
+    console.warn("ITMU elements not found");
+    return;
+  }
+
+  itmuText.value = state.itmu.text || "";
+  setupWordCounter(itmuText, itmuWords, OA_MAX_WORDS);
   itmuText.addEventListener("input", () => {
     state.itmu.text = itmuText.value;
   });
@@ -109,22 +177,34 @@ function initOtherInstitActivities() {
   renderFigureList("itmuFigures", state.itmu.figures);
   renderTableList("itmuTables", state.itmu.tables);
 
-  document.getElementById("addItmuFigure").onclick = () =>
-    addFigure(state.itmu.figures, () =>
-      renderFigureList("itmuFigures", state.itmu.figures)
-    );
+  const addItmuFigBtn = document.getElementById("addItmuFigure");
+  if (addItmuFigBtn) {
+    addItmuFigBtn.onclick = () =>
+      addFigure(state.itmu.figures, () =>
+        renderFigureList("itmuFigures", state.itmu.figures)
+      );
+  }
 
-  document.getElementById("addItmuTable").onclick = () =>
-    addTable(state.itmu.tables, () =>
-      renderTableList("itmuTables", state.itmu.tables)
-    );
+  const addItmuTabBtn = document.getElementById("addItmuTable");
+  if (addItmuTabBtn) {
+    addItmuTabBtn.onclick = () =>
+      addTable(state.itmu.tables, () =>
+        renderTableList("itmuTables", state.itmu.tables)
+      );
+  }
 
   // --------------------------------------------------------
   // ABI
   // --------------------------------------------------------
   const abiText = document.getElementById("abiText");
   const abiWords = document.getElementById("abiWords");
-  abiText.value = state.abi.text;
+
+  if (!abiText || !abiWords) {
+    console.warn("ABI elements not found");
+    return;
+  }
+
+  abiText.value = state.abi.text || "";
   setupWordCounter(abiText, abiWords, OA_MAX_WORDS);
 
   abiText.addEventListener("input", () => {
@@ -134,20 +214,31 @@ function initOtherInstitActivities() {
   renderFigureList("abiFigures", state.abi.figures);
   renderTableList("abiTables", state.abi.tables);
 
-  document.getElementById("addAbiFigure").onclick = () =>
-    addFigure(state.abi.figures, () =>
-      renderFigureList("abiFigures", state.abi.figures)
-    );
+  const addAbiFigBtn = document.getElementById("addAbiFigure");
+  if (addAbiFigBtn) {
+    addAbiFigBtn.onclick = () =>
+      addFigure(state.abi.figures, () =>
+        renderFigureList("abiFigures", state.abi.figures)
+      );
+  }
 
-  document.getElementById("addAbiTable").onclick = () =>
-    addTable(state.abi.tables, () =>
-      renderTableList("abiTables", state.abi.tables)
-    );
+  const addAbiTabBtn = document.getElementById("addAbiTable");
+  if (addAbiTabBtn) {
+    addAbiTabBtn.onclick = () =>
+      addTable(state.abi.tables, () =>
+        renderTableList("abiTables", state.abi.tables)
+      );
+  }
 
   // --------------------------------------------------------
   // IMPORTANT MEETINGS
   // --------------------------------------------------------
   const meetingContainer = document.getElementById("meetingsContainer");
+
+  if (!meetingContainer) {
+    console.warn("Meeting container not found");
+    return;
+  }
 
   function renderMeetings() {
     meetingContainer.innerHTML = "";
@@ -164,10 +255,12 @@ function initOtherInstitActivities() {
         <h4>${m.title}</h4>
 
         <label>Description (max 250 words)</label>
-        <textarea class="mtxt" data-i="${idx}">${m.text}</textarea>
+        <textarea class="mtxt" data-i="${idx}" style="width:100%; min-height:100px;">${
+        m.text || ""
+      }</textarea>
         <div class="word-count" id="wc_${idx}"></div>
 
-        <label>Figures</label>
+        <label style="margin-top:10px;">Figures</label>
         <div id="mf_${idx}"></div>
         <button class="btn btn-primary btn-sm" id="addMF_${idx}">➕ Add Figure</button>
 
@@ -180,50 +273,66 @@ function initOtherInstitActivities() {
 
       meetingContainer.appendChild(blk);
 
-      // Text
+      // Text + Counter
       const txt = blk.querySelector(".mtxt");
       const wcEl = blk.querySelector(`#wc_${idx}`);
-      setupWordCounter(txt, wcEl, OA_MAX_WORDS);
 
-      txt.addEventListener("input", (e) => (m.text = e.target.value));
+      if (txt && wcEl) {
+        setupWordCounter(txt, wcEl, OA_MAX_WORDS);
+        txt.addEventListener("input", (e) => {
+          m.text = e.target.value;
+        });
+      }
 
       // Figures
       renderFigureList(`mf_${idx}`, m.figures);
-      document.getElementById(`addMF_${idx}`).onclick = () =>
-        addFigure(m.figures, () => renderFigureList(`mf_${idx}`, m.figures));
+      const addFigBtn = document.getElementById(`addMF_${idx}`);
+      if (addFigBtn) {
+        addFigBtn.onclick = () =>
+          addFigure(m.figures, () => renderFigureList(`mf_${idx}`, m.figures));
+      }
 
       // Tables
       renderTableList(`mt_${idx}`, m.tables);
-      document.getElementById(`addMT_${idx}`).onclick = () =>
-        addTable(m.tables, () => renderTableList(`mt_${idx}`, m.tables));
+      const addTabBtn = document.getElementById(`addMT_${idx}`);
+      if (addTabBtn) {
+        addTabBtn.onclick = () =>
+          addTable(m.tables, () => renderTableList(`mt_${idx}`, m.tables));
+      }
     });
 
-    // Remove meeting
+    // Delete Meeting
     meetingContainer.querySelectorAll("button[data-del]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = parseInt(btn.dataset.del);
-        state.meetings.splice(idx, 1);
-        renderMeetings();
+        if (confirm(`Remove "${state.meetings[idx].title}"?`)) {
+          state.meetings.splice(idx, 1);
+          renderMeetings();
+        }
       });
     });
   }
 
   // Add new meeting type
-  document.getElementById("addMeetingType").onclick = () => {
-    const title = prompt("Enter meeting title:");
-    if (!title) return;
+  const addMeetingBtn = document.getElementById("addMeetingType");
+  if (addMeetingBtn) {
+    addMeetingBtn.onclick = () => {
+      const title = prompt("Enter meeting title:");
+      if (!title || title.trim() === "") return;
 
-    state.meetings.push({
-      id: "m_" + Date.now(),
-      title,
-      text: "",
-      tables: [],
-      figures: [],
-    });
+      state.meetings.push({
+        id: "m_" + Date.now(),
+        title: title.trim(),
+        text: "",
+        tables: [],
+        figures: [],
+      });
 
-    renderMeetings();
-  };
+      renderMeetings();
+    };
+  }
 
+  // Initial render of meetings
   renderMeetings();
 }
 
