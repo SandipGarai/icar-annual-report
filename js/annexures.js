@@ -268,31 +268,22 @@ function initAnnexuresSection() {
   renderExtProj();
 
   // =====================================
-  // 10.3.1 Budget Utilization
+  // 10.3.1 Budget Utilization  (CLEAN VERSION, NO XLSX UPLOAD)
   // =====================================
 
   const budgetDiv = document.getElementById("budgetUtilTable");
-  const budgetCustomContainer = document.getElementById("budgetCustomPreview");
 
+  // State preparation
   if (!state.budget_utilization) {
-    state.budget_utilization = { rows: [], footer: {}, custom_tables: [] };
+    state.budget_utilization = { rows: [] };
   }
   if (!Array.isArray(state.budget_utilization.rows)) {
     state.budget_utilization.rows = [];
   }
-  if (!Array.isArray(state.budget_utilization.custom_tables)) {
-    state.budget_utilization.custom_tables = [];
-  }
-  if (!state.budget_utilization._tableBlock) {
-    state.budget_utilization._tableBlock = {
-      tables: state.budget_utilization.custom_tables,
-    };
-  }
 
-  // ===================================================
-  // SMART CALC HELPERS (NO RERENDER WHILE TYPING)
-  // ===================================================
-
+  // ------------------------------
+  // % Calculation Helper
+  // ------------------------------
   function updateBudgetRow(row) {
     const re = parseFloat(row.re) || 0;
     const exp = parseFloat(row.exp) || 0;
@@ -303,71 +294,121 @@ function initAnnexuresSection() {
     row.upto_pct = be > 0 ? ((upto / be) * 100).toFixed(2) : "";
   }
 
+  // ------------------------------
+  // Compute Total Row
+  // ------------------------------
   function updateBudgetTotals() {
+    const rows = state.budget_utilization.rows;
+
+    let totalRow = rows.find((r) => r.head?.toLowerCase() === "total");
+    if (!totalRow) {
+      totalRow = { head: "Total" };
+      rows.push(totalRow);
+    }
+
     let sumRE = 0,
       sumExp = 0,
       sumUpto = 0,
       sumBE = 0;
 
-    const rows = state.budget_utilization.rows;
-    const totalRow = rows.find((r) => r.head?.toLowerCase() === "total");
-
     rows.forEach((r) => {
       if (!r || r.head?.toLowerCase() === "total") return;
+
       sumRE += parseFloat(r.re) || 0;
       sumExp += parseFloat(r.exp) || 0;
       sumUpto += parseFloat(r.upto) || 0;
       sumBE += parseFloat(r.be) || 0;
     });
 
-    if (totalRow) {
-      totalRow.re = sumRE.toFixed(2);
-      totalRow.exp = sumExp.toFixed(2);
-      totalRow.upto = sumUpto.toFixed(2);
-      totalRow.be = sumBE.toFixed(2);
+    totalRow.re = sumRE.toFixed(2);
+    totalRow.exp = sumExp.toFixed(2);
+    totalRow.upto = sumUpto.toFixed(2);
+    totalRow.be = sumBE.toFixed(2);
 
-      const nonTotals = rows.filter(
-        (r) => r && r.head?.toLowerCase() !== "total"
-      );
+    // Average % for total row
+    const nonTotals = rows.filter((r) => r.head?.toLowerCase() !== "total");
 
-      const avgExpPct =
-        nonTotals.reduce((a, r) => a + (parseFloat(r.exp_pct) || 0), 0) /
-        nonTotals.length;
+    const avgExpPct =
+      nonTotals.reduce((a, r) => a + (parseFloat(r.exp_pct) || 0), 0) /
+      (nonTotals.length || 1);
 
-      const avgUptoPct =
-        nonTotals.reduce((a, r) => a + (parseFloat(r.upto_pct) || 0), 0) /
-        nonTotals.length;
+    const avgUptoPct =
+      nonTotals.reduce((a, r) => a + (parseFloat(r.upto_pct) || 0), 0) /
+      (nonTotals.length || 1);
 
-      totalRow.exp_pct = avgExpPct.toFixed(2);
-      totalRow.upto_pct = avgUptoPct.toFixed(2);
-    }
+    totalRow.exp_pct = avgExpPct.toFixed(2);
+    totalRow.upto_pct = avgUptoPct.toFixed(2);
   }
 
-  // ===================================================
-  // RENDER FUNCTION
-  // ===================================================
+  // ------------------------------
+  // Add New Row Above Total
+  // ------------------------------
+  function addBudgetRow() {
+    const rows = state.budget_utilization.rows;
 
+    const newRow = {
+      head: "",
+      re: "",
+      exp: "",
+      exp_pct: "",
+      be: "",
+      upto: "",
+      upto_pct: "",
+    };
+
+    const totalIndex = rows.findIndex((r) => r.head?.toLowerCase() === "total");
+
+    if (totalIndex === -1) {
+      rows.push(newRow);
+    } else {
+      rows.splice(totalIndex, 0, newRow);
+    }
+
+    updateBudgetTotals();
+    renderBudget();
+  }
+
+  // ------------------------------
+  // Bind Add Row Button
+  // ------------------------------
+  function bindBudgetButtons() {
+    const addBtn = document.getElementById("budgetAddRowBtn");
+    if (addBtn) addBtn.addEventListener("click", addBudgetRow);
+  }
+
+  // ------------------------------
+  // Render UI Table
+  // ------------------------------
   function renderBudget() {
     budgetDiv.innerHTML = "";
 
     const { prevFY, currFY, uptoYear } = getYearLabels();
+
     const table = document.createElement("table");
     const thead = document.createElement("thead");
     const tbody = document.createElement("tbody");
 
     thead.innerHTML = `
-      <tr>
-        <th>Head</th>
-        <th>RE (${prevFY})</th>
-        <th>Total expenditure (${prevFY})</th>
-        <th>Total expenditure (%)</th>
-        <th>BE (${currFY})</th>
-        <th>Total expenditure upto 31-12-${uptoYear}</th>
-        <th>Total expenditure upto 31-12-${uptoYear} (%)</th>
-        <th>Action</th>
-      </tr>
-    `;
+    <tr>
+      <th>Head</th>
+      <th>RE (${prevFY})</th>
+      <th>Total expenditure (${prevFY})</th>
+      <th>Total expenditure (%)</th>
+      <th>BE (${currFY})</th>
+      <th>Total expenditure upto 31-12-${uptoYear}</th>
+      <th>Total expenditure upto 31-12-${uptoYear} (%)</th>
+      <th>Action</th>
+    </tr>
+  `;
 
+    // Sort rows to keep Total at bottom
+    state.budget_utilization.rows.sort((a, b) => {
+      const aT = a.head?.toLowerCase() === "total";
+      const bT = b.head?.toLowerCase() === "total";
+      return aT === bT ? 0 : aT ? 1 : -1;
+    });
+
+    // Render rows
     state.budget_utilization.rows.forEach((row, idx) => {
       if (!row) state.budget_utilization.rows[idx] = row = {};
       row.head = row.head || "";
@@ -380,66 +421,53 @@ function initAnnexuresSection() {
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><input type="text" value="${row.head}"></td>
-        <td><input type="number" value="${row.re}"></td>
-        <td><input type="number" value="${row.exp}"></td>
-        <td><input type="text" value="${row.exp_pct}"></td>
-        <td><input type="number" value="${row.be}"></td>
-        <td><input type="number" value="${row.upto}"></td>
-        <td><input type="text" value="${row.upto_pct}"></td>
-        <td><button class="btn btn-danger btn-sm del">🗑</button></td>
-      `;
+      <td><input type="text" value="${row.head}"></td>
+      <td><input type="number" value="${row.re}"></td>
+      <td><input type="number" value="${row.exp}"></td>
+      <td><input type="text" value="${row.exp_pct}"></td>
+      <td><input type="number" value="${row.be}"></td>
+      <td><input type="number" value="${row.upto}"></td>
+      <td><input type="text" value="${row.upto_pct}"></td>
+      <td><button class="btn btn-danger btn-sm del">🗑</button></td>
+    `;
 
       const inputs = tr.querySelectorAll("td input");
 
-      // Head
+      // Input handlers
       inputs[0].addEventListener("input", (e) => (row.head = e.target.value));
 
-      // RE
       inputs[1].addEventListener("input", (e) => {
         row.re = e.target.value;
         updateBudgetRow(row);
         updateBudgetTotals();
       });
-      inputs[1].addEventListener("blur", renderBudget);
 
-      // EXP
       inputs[2].addEventListener("input", (e) => {
         row.exp = e.target.value;
         updateBudgetRow(row);
         updateBudgetTotals();
       });
-      inputs[2].addEventListener("blur", renderBudget);
 
-      // EXP %
-      inputs[3].addEventListener(
-        "input",
-        (e) => (row.exp_pct = e.target.value)
-      );
+      inputs[3].addEventListener("input", (e) => {
+        row.exp_pct = e.target.value;
+      });
 
-      // BE (Fix for taking multi digits)
       inputs[4].addEventListener("input", (e) => {
         row.be = e.target.value;
         updateBudgetRow(row);
         updateBudgetTotals();
       });
-      inputs[4].addEventListener("blur", renderBudget);
 
-      // UPTO
       inputs[5].addEventListener("input", (e) => {
         row.upto = e.target.value;
         updateBudgetRow(row);
         updateBudgetTotals();
       });
-      inputs[5].addEventListener("blur", renderBudget);
 
-      // Upto %
-      inputs[6].addEventListener(
-        "input",
-        (e) => (row.upto_pct = e.target.value)
-      );
+      inputs[6].addEventListener("input", (e) => {
+        row.upto_pct = e.target.value;
+      });
 
-      // Delete row
       tr.querySelector(".del").addEventListener("click", () => {
         if (!confirm("Delete this row?")) return;
         state.budget_utilization.rows.splice(idx, 1);
@@ -454,6 +482,9 @@ function initAnnexuresSection() {
     budgetDiv.appendChild(table);
   }
 
+  // ------------------------------
+  // Preload default rows button
+  // ------------------------------
   document
     .getElementById("initBudgetTableBtn")
     .addEventListener("click", () => {
@@ -472,22 +503,10 @@ function initAnnexuresSection() {
       renderBudget();
     });
 
+  // INITIAL RENDER
   renderBudget();
+  bindBudgetButtons();
 
-  // custom tables unchanged
-  function renderBudgetCustomTables() {
-    if (!budgetCustomContainer) return;
-    budgetCustomContainer.innerHTML = "";
-    state.budget_utilization.custom_tables.forEach((tbl) => {
-      renderTableCard(tbl, budgetCustomContainer);
-    });
-  }
-
-  document.getElementById("uploadBudgetXlsx").addEventListener("click", () => {
-    openTableModal(state.budget_utilization._tableBlock, budgetCustomContainer);
-  });
-
-  renderBudgetCustomTables();
   // =====================================
   // 10.3.1 (A) Other Details
   // =====================================
@@ -561,13 +580,16 @@ function initAnnexuresSection() {
     const table = document.createElement("table");
     const thead = document.createElement("thead");
     const tbody = document.createElement("tbody");
-    const baseYear = AppState.basic_info.year; // example: 2025
+    const baseYear = AppState.basic_info?.year
+      ? parseInt(AppState.basic_info.year, 10)
+      : new Date().getFullYear();
 
     thead.innerHTML = `
       <tr>
         <th>Head</th>
         <th>FY (${prevFY})</th>
         <th>FY (${currFY}) upto 31-12-${baseYear}</th>
+        <th>Action</th>
       </tr>
     `;
 
@@ -582,7 +604,14 @@ function initAnnexuresSection() {
         <td><input type="text" value="${row.head}"></td>
         <td><input type="number" value="${row.prev}"></td>
         <td><input type="number" value="${row.curr}"></td>
+        <td><button class="btn btn-danger btn-sm del">🗑</button></td>
       `;
+
+      tr.querySelector(".del").addEventListener("click", () => {
+        if (!confirm("Delete this row?")) return;
+        state.revenue_generation.rows.splice(idx, 1);
+        renderRevenue();
+      });
 
       tr.cells[0].querySelector("input").addEventListener("input", (e) => {
         row.head = e.target.value;
@@ -1220,19 +1249,135 @@ function initAnnexuresSection() {
   renderInfraProgress();
 
   // =====================================
-  // 10.10 Staff Positions / Appointments / Promotions / Transfers / New joining
-  // (Option A figs + tables)
+  // 10.10 Staff Positions / Appointments / Promotions / Transfers / New Joining
   // =====================================
 
   const staffDiv = document.getElementById("staffPositionsContainer");
-  if (!state.staff_positions) {
-    state.staff_positions = {
-      appointments: [],
-      promotions: [],
-      transfers: [],
-      new_joining: [],
+  if (!AppState.sections.annexures.staff_positions) {
+    AppState.sections.annexures.staff_positions = {};
+  }
+  state.staff_positions = AppState.sections.annexures.staff_positions;
+  const sp = state.staff_positions;
+
+  // BaseYear (dynamic)
+  const baseYear = AppState.basic_info?.year
+    ? parseInt(AppState.basic_info.year, 10)
+    : new Date().getFullYear();
+
+  // ----- Ensure staff strength structure -----
+  if (!sp.strength) {
+    sp.strength = {
+      scientific: { rows: [] },
+      administrative: { rows: [] },
+      technical: { rows: [] },
+      other_staff: [],
     };
   }
+
+  ["scientific", "administrative", "technical"].forEach((g) => {
+    if (!Array.isArray(sp.strength[g].rows)) sp.strength[g].rows = [];
+  });
+
+  if (!Array.isArray(sp.strength.other_staff)) sp.strength.other_staff = [];
+
+  // ---- default rows + totals ----
+  function initDefaultStaffRows() {
+    if (!sp.strength.scientific.rows.length) {
+      sp.strength.scientific.rows = [
+        {
+          category: "RMP (Director + Joint Director)",
+          sanctioned: "",
+          filled: "",
+          baseyear: "",
+        },
+        {
+          category: "Principal Scientist",
+          sanctioned: "",
+          filled: "",
+          baseyear: "",
+        },
+        {
+          category: "Senior Scientist",
+          sanctioned: "",
+          filled: "",
+          baseyear: "",
+        },
+        { category: "Scientist", sanctioned: "", filled: "", baseyear: "" },
+        { category: "Total", sanctioned: "0", filled: "0", baseyear: "" },
+      ];
+    }
+
+    if (!sp.strength.administrative.rows.length) {
+      sp.strength.administrative.rows = [
+        { category: "CAO (SG)", sanctioned: "", filled: "", baseyear: "" },
+        { category: "Comptroller", sanctioned: "", filled: "", baseyear: "" },
+        { category: "Sr. F&AO", sanctioned: "", filled: "", baseyear: "" },
+        { category: "CF & AO", sanctioned: "", filled: "", baseyear: "" },
+        { category: "Sr. AO", sanctioned: "", filled: "", baseyear: "" },
+        { category: "AO", sanctioned: "", filled: "", baseyear: "" },
+        { category: "AAO", sanctioned: "", filled: "", baseyear: "" },
+        { category: "PS", sanctioned: "", filled: "", baseyear: "" },
+        { category: "PA", sanctioned: "", filled: "", baseyear: "" },
+        { category: "Assistant", sanctioned: "", filled: "", baseyear: "" },
+        { category: "UDC", sanctioned: "", filled: "", baseyear: "" },
+        { category: "LDC", sanctioned: "", filled: "", baseyear: "" },
+        {
+          category: "Official Language Staff",
+          sanctioned: "",
+          filled: "",
+          baseyear: "",
+        },
+        { category: "Total", sanctioned: "0", filled: "0", baseyear: "" },
+      ];
+    }
+
+    if (!sp.strength.technical.rows.length) {
+      sp.strength.technical.rows = [
+        { category: "T-1", sanctioned: "", filled: "", baseyear: "" },
+        { category: "T-3", sanctioned: "", filled: "", baseyear: "" },
+        { category: "T-6", sanctioned: "", filled: "", baseyear: "" },
+        { category: "Total", sanctioned: "0", filled: "0", baseyear: "" },
+      ];
+    }
+  }
+
+  function updateStaffTotals(group) {
+    const rows = group.rows || [];
+
+    let totalRow = rows.find((r) => r.category?.toLowerCase() === "total");
+
+    if (!totalRow) {
+      totalRow = {
+        category: "Total",
+        sanctioned: "0",
+        filled: "0",
+        baseyear: "0",
+      };
+      rows.push(totalRow);
+    }
+
+    let san = 0,
+      fil = 0,
+      base = 0;
+
+    rows.forEach((r) => {
+      if (!r || r.category?.toLowerCase() === "total") return;
+      san += Number(r.sanctioned) || 0;
+      fil += Number(r.filled) || 0;
+      base += Number(r.baseyear) || 0;
+    });
+
+    totalRow.sanctioned = san.toString();
+    totalRow.filled = fil.toString();
+    totalRow.baseyear = base.toString();
+  }
+
+  // ----- meta -----
+  const strengthMeta = [
+    { key: "scientific", title: "Scientific Staff" },
+    { key: "administrative", title: "Administrative Staff" },
+    { key: "technical", title: "Technical Staff" },
+  ];
 
   const staffMeta = [
     { key: "appointments", title: "Appointments" },
@@ -1241,28 +1386,278 @@ function initAnnexuresSection() {
     { key: "new_joining", title: "New Joining" },
   ];
 
+  ["appointments", "promotions", "transfers", "new_joining"].forEach((k) => {
+    if (!Array.isArray(sp[k])) sp[k] = [];
+  });
+
+  // ------- MAIN RENDER -------
   function renderStaffPositions() {
     staffDiv.innerHTML = "";
 
+    // A. STAFF STRENGTH
+    initDefaultStaffRows();
+
+    const strengthWrap = document.createElement("div");
+    strengthWrap.className = "dev-block";
+    strengthWrap.innerHTML = `<h4>Staff Strength</h4>`;
+
+    strengthMeta.forEach((meta) => {
+      const group = sp.strength[meta.key];
+      const card = document.createElement("div");
+      card.className = "dev-item-card";
+
+      card.innerHTML = `
+      <h5>${meta.title}</h5>
+      <div class="upload-group" style="margin-bottom:8px;">
+        <button class="btn btn-secondary btn-sm initDefault">↺ Load Default</button>
+        <button class="btn btn-secondary btn-sm addRow">➕ Add Row</button>
+      </div>
+      <div class="table-container staff-strength-table"></div>
+    `;
+
+      const tblDiv = card.querySelector(".staff-strength-table");
+
+      function renderStrengthTable() {
+        tblDiv.innerHTML = "";
+        const rows = group.rows;
+        if (!rows.length) {
+          tblDiv.innerHTML = `
+            <p style="color:#777;font-style:italic;">
+              Click <b>↺ Load Default</b> to display Staff Strength table.
+            </p>`;
+          return;
+        }
+
+        const table = document.createElement("table");
+        const thead = document.createElement("thead");
+        const tbody = document.createElement("tbody");
+
+        thead.innerHTML = `
+        <tr>
+          <th>Sl. No.</th>
+          <th>Category</th>
+          <th>Sanctioned</th>
+          <th>Filled</th>
+          <th>${baseYear}</th>
+          <th>Action</th>
+        </tr>
+      `;
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
+
+        function syncTotalRowInputs() {
+          const totalRowObj = rows.find(
+            (r) => r.category?.toLowerCase() === "total"
+          );
+          if (!totalRowObj) return;
+
+          const allTrs = tbody.querySelectorAll("tr");
+          const totalIndex = rows.indexOf(totalRowObj);
+          const tr = allTrs[totalIndex];
+          if (!tr) return;
+
+          const inputs = tr.querySelectorAll("input");
+          inputs[1].value = totalRowObj.sanctioned;
+          inputs[2].value = totalRowObj.filled;
+          inputs[3].value = totalRowObj.baseyear;
+        }
+
+        rows.forEach((row, idx) => {
+          const tr = document.createElement("tr");
+
+          tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td><input type="text" value="${row.category || ""}"></td>
+          <td><input type="number" value="${row.sanctioned || ""}"></td>
+          <td><input type="number" value="${row.filled || ""}"></td>
+          <td><input type="number" value="${row.baseyear || ""}"></td>
+          <td><button class="btn btn-danger btn-sm del">🗑</button></td>
+        `;
+
+          const [cat, san, fil, by] = tr.querySelectorAll("input");
+
+          cat.addEventListener("input", (e) => {
+            row.category = e.target.value;
+            AppState.sections.annexures.staff_positions.strength[meta.key].rows[
+              idx
+            ].category = e.target.value;
+          });
+
+          san.addEventListener("input", (e) => {
+            row.sanctioned = e.target.value;
+            AppState.sections.annexures.staff_positions.strength[meta.key].rows[
+              idx
+            ].sanctioned = e.target.value;
+            updateStaffTotals(group);
+            syncTotalRowInputs();
+          });
+
+          fil.addEventListener("input", (e) => {
+            row.filled = e.target.value;
+            AppState.sections.annexures.staff_positions.strength[meta.key].rows[
+              idx
+            ].filled = e.target.value;
+            updateStaffTotals(group);
+            syncTotalRowInputs();
+          });
+
+          by.addEventListener("input", (e) => {
+            row.baseyear = e.target.value;
+            AppState.sections.annexures.staff_positions.strength[meta.key].rows[
+              idx
+            ].baseyear = e.target.value;
+            updateStaffTotals(group);
+            syncTotalRowInputs();
+          });
+
+          tr.querySelector(".del").addEventListener("click", () => {
+            if (!confirm("Delete this row?")) return;
+            rows.splice(idx, 1);
+            updateStaffTotals(group);
+            renderStrengthTable();
+          });
+
+          tbody.appendChild(tr);
+        });
+
+        updateStaffTotals(group);
+        syncTotalRowInputs();
+        tblDiv.appendChild(table);
+      }
+
+      card.querySelector(".initDefault").addEventListener("click", () => {
+        sp.strength[meta.key].rows = [];
+        initDefaultStaffRows();
+        updateStaffTotals(group);
+        renderStrengthTable();
+      });
+
+      card.querySelector(".addRow").addEventListener("click", () => {
+        const rows = group.rows;
+
+        const newRow = {
+          category: "",
+          sanctioned: "",
+          filled: "",
+          baseyear: "",
+        };
+
+        const totalIdx = rows.findIndex(
+          (r) => r.category?.toLowerCase() === "total"
+        );
+
+        if (totalIdx === -1) rows.push(newRow);
+        else rows.splice(totalIdx, 0, newRow);
+
+        updateStaffTotals(group);
+        renderStrengthTable();
+      });
+
+      updateStaffTotals(group);
+      renderStrengthTable();
+
+      strengthWrap.appendChild(card);
+    });
+
+    staffDiv.appendChild(strengthWrap);
+
+    // ------- OTHER STAFF -------
+    const otherWrap = document.createElement("div");
+    otherWrap.className = "dev-block";
+    otherWrap.innerHTML = `
+    <h4>Other Staff (if any)</h4>
+    <button class="btn btn-secondary btn-sm addOtherStaff">➕ Add Item</button>
+    <div class="items"></div>
+  `;
+
+    const itemsDiv = otherWrap.querySelector(".items");
+
+    function renderOtherStaff() {
+      itemsDiv.innerHTML = "";
+      sp.strength.other_staff.forEach((it, idx) => {
+        if (!it) sp.strength.other_staff[idx] = it = {};
+        if (!Array.isArray(it.tables)) it.tables = [];
+        if (!Array.isArray(it.figures)) it.figures = [];
+        it.note = it.note || "";
+
+        const card = document.createElement("div");
+        card.className = "dev-item-card";
+        card.innerHTML = `
+        <textarea class="text-input note" rows="2" placeholder="Remarks">${it.note}</textarea>
+        <div class="upload-group">
+          <button class="btn add-table-btn addTable">➕ Add Table</button>
+          <button class="btn add-figure-btn addFig">➕ Add Figure</button>
+        </div>
+        <div class="table-block"></div>
+        <div class="fig-block"></div>
+        <button class="btn btn-danger btn-sm delItem" style="margin-top:6px;">🗑 Remove</button>
+      `;
+
+        const noteField = card.querySelector(".note");
+        noteField.addEventListener("input", (e) => {
+          it.note = e.target.value;
+        });
+
+        const tableBlock = card.querySelector(".table-block");
+        const figBlock = card.querySelector(".fig-block");
+
+        function renderTables() {
+          tableBlock.innerHTML = "";
+          it.tables.forEach((tbl) => renderTableCard(tbl, tableBlock));
+        }
+
+        function renderFigs() {
+          figBlock.innerHTML = "";
+          it.figures.forEach((fig) => renderFigureCard(fig, figBlock));
+        }
+
+        card.querySelector(".addTable").addEventListener("click", () => {
+          openTableModal(it, tableBlock);
+        });
+
+        card.querySelector(".addFig").addEventListener("click", () => {
+          openFigureModal(it, figBlock);
+        });
+
+        card.querySelector(".delItem").addEventListener("click", () => {
+          if (!confirm("Remove this item?")) return;
+          sp.strength.other_staff.splice(idx, 1);
+          renderOtherStaff();
+        });
+
+        renderTables();
+        renderFigs();
+        itemsDiv.appendChild(card);
+      });
+    }
+
+    otherWrap.querySelector(".addOtherStaff").addEventListener("click", () => {
+      sp.strength.other_staff.push({ note: "", tables: [], figures: [] });
+      renderOtherStaff();
+    });
+
+    renderOtherStaff();
+    staffDiv.appendChild(otherWrap);
+
+    // ------- B. Appointments/Promotions/Transfers/New Joining -------
     staffMeta.forEach((meta) => {
-      const list =
-        state.staff_positions[meta.key] ||
-        (state.staff_positions[meta.key] = []);
+      const list = sp[meta.key];
 
       const wrap = document.createElement("div");
       wrap.className = "dev-block";
       wrap.innerHTML = `
-        <h4>${meta.title}</h4>
-        <button class="btn btn-secondary btn-sm addItem">➕ Add ${meta.title} Person</button>
-        <div class="items"></div>
-      `;
-
-      const itemsDiv = wrap.querySelector(".items");
+      <h4>${meta.title}</h4>
+      <button class="btn btn-secondary btn-sm addItem">➕ Add ${meta.title} Person</button>
+      <div class="items"></div>
+    `;
 
       wrap.querySelector(".addItem").addEventListener("click", () => {
         list.push({ note: "", tables: [], figures: [] });
         renderStaffPositions();
       });
+
+      const itemsDiv2 = wrap.querySelector(".items");
 
       list.forEach((it, idx) => {
         if (!it) list[idx] = it = {};
@@ -1272,18 +1667,17 @@ function initAnnexuresSection() {
 
         const card = document.createElement("div");
         card.className = "dev-item-card";
+
         card.innerHTML = `
-          <textarea class="text-input note" rows="2" placeholder="Comments / details">${it.note}</textarea>
-
-          <div class="upload-group">
-            <button class="btn add-table-btn addTable">➕ Add Table</button>
-            <button class="btn add-figure-btn addFig">➕ Add Figure</button>
-          </div>
-          <div class="table-block"></div>
-          <div class="fig-block"></div>
-
-          <button class="btn btn-danger btn-sm delItem" style="margin-top:6px;">🗑 Remove</button>
-        `;
+        <textarea class="text-input note" rows="2" placeholder="Comments / details">${it.note}</textarea>
+        <div class="upload-group">
+          <button class="btn add-table-btn addTable">➕ Add Table</button>
+          <button class="btn add-figure-btn addFig">➕ Add Figure</button>
+        </div>
+        <div class="table-block"></div>
+        <div class="fig-block"></div>
+        <button class="btn btn-danger btn-sm delItem" style="margin-top:6px;">🗑 Remove</button>
+      `;
 
         card.querySelector(".note").addEventListener("input", (e) => {
           it.note = e.target.value;
@@ -1294,30 +1688,21 @@ function initAnnexuresSection() {
 
         function renderTables() {
           tableBlock.innerHTML = "";
-          (it.tables || []).forEach((tbl) => {
-            renderTableCard(tbl, tableBlock);
-          });
+          it.tables.forEach((tbl) => renderTableCard(tbl, tableBlock));
         }
 
         function renderFigs() {
           figBlock.innerHTML = "";
-          (it.figures || []).forEach((fig) => {
-            renderFigureCard(fig, figBlock);
-          });
+          it.figures.forEach((fig) => renderFigureCard(fig, figBlock));
         }
 
-        card.querySelector(".addTable").addEventListener("click", () => {
-          if (!Array.isArray(it.tables)) it.tables = [];
-          openTableModal(it, tableBlock);
-        });
+        card
+          .querySelector(".addTable")
+          .addEventListener("click", () => openTableModal(it, tableBlock));
 
-        card.querySelector(".addFig").addEventListener("click", () => {
-          if (!Array.isArray(it.figures)) it.figures = [];
-          openFigureModal(it, figBlock);
-        });
-
-        renderTables();
-        renderFigs();
+        card
+          .querySelector(".addFig")
+          .addEventListener("click", () => openFigureModal(it, figBlock));
 
         card.querySelector(".delItem").addEventListener("click", () => {
           if (!confirm("Remove this item?")) return;
@@ -1325,13 +1710,16 @@ function initAnnexuresSection() {
           renderStaffPositions();
         });
 
-        itemsDiv.appendChild(card);
+        renderTables();
+        renderFigs();
+        itemsDiv2.appendChild(card);
       });
 
       staffDiv.appendChild(wrap);
     });
   }
 
+  // INITIAL RENDER
   renderStaffPositions();
 
   // =====================================

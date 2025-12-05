@@ -43,6 +43,8 @@ function initBasicInfoSection() {
   // Pre-fill from login if not already set
   if (!st.facultyName && logged.fullname) {
     st.facultyName = logged.fullname.toUpperCase();
+    // 🔥 ALSO sync canonical basic_info so backend sees correct name
+    AppState.basic_info.faculty_name = st.facultyName;
   }
 
   // Set value (either from state or login)

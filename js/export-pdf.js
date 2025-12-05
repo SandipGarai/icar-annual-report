@@ -1026,6 +1026,58 @@ async function renderPublicationsSection(doc, state) {
 // -------------------------------
 // Section 10 – Annexures
 // -------------------------------
+// ===============================
+// PDF-ONLY: Compute Budget Totals
+// ===============================
+function computeBudgetTotalsForPDF(rows) {
+  let sumRE = 0,
+    sumExp = 0,
+    sumUpto = 0,
+    sumBE = 0,
+    expPctList = [],
+    uptoPctList = [];
+
+  rows.forEach((r) => {
+    if (!r || r.head?.toLowerCase() === "total") return;
+
+    const re = parseFloat(r.re) || 0;
+    const exp = parseFloat(r.exp) || 0;
+    const upto = parseFloat(r.upto) || 0;
+    const be = parseFloat(r.be) || 0;
+
+    sumRE += re;
+    sumExp += exp;
+    sumUpto += upto;
+    sumBE += be;
+
+    expPctList.push(parseFloat(r.exp_pct) || 0);
+    uptoPctList.push(parseFloat(r.upto_pct) || 0);
+  });
+
+  // ensure Total row exists
+  let totalRow = rows.find((r) => r.head?.toLowerCase() === "total");
+  if (!totalRow) {
+    totalRow = { head: "Total" };
+    rows.push(totalRow);
+  }
+
+  totalRow.re = sumRE.toFixed(2);
+  totalRow.exp = sumExp.toFixed(2);
+  totalRow.upto = sumUpto.toFixed(2);
+  totalRow.be = sumBE.toFixed(2);
+
+  const avgExpPct = expPctList.length
+    ? (expPctList.reduce((a, b) => a + b, 0) / expPctList.length).toFixed(2)
+    : "0";
+
+  const avgUptoPct = uptoPctList.length
+    ? (uptoPctList.reduce((a, b) => a + b, 0) / uptoPctList.length).toFixed(2)
+    : "0";
+
+  totalRow.exp_pct = avgExpPct;
+  totalRow.upto_pct = avgUptoPct;
+}
+
 async function renderAnnexuresSection(doc, state) {
   const sec = AppState.sections.annexures;
   if (!sec) return;
@@ -1120,17 +1172,29 @@ async function renderAnnexuresSection(doc, state) {
     );
   }
 
+  // ====================================================
   // 10.3 Budget Utilization & Revenue Generation
-  if (
-    sec.budget_utilization &&
-    (hasArrayContent(sec.budget_utilization.rows) ||
-      (sec.budget_utilization.custom_table &&
-        hasArrayContent(sec.budget_utilization.custom_table.rows)))
-  ) {
+  // (CLEAN VERSION — NO XLSX UPLOAD SUPPORT)
+  // ====================================================
+  if (sec.budget_utilization) {
+    const bu = sec.budget_utilization;
+
     writeSubheading(doc, "10.3.1 Budget Utilization", state);
 
-    if (hasArrayContent(sec.budget_utilization.rows)) {
-      const rows = sec.budget_utilization.rows;
+    // ---------------------------------------
+    // ALWAYS EXPORT UI TABLE (no custom XLSX)
+    // ---------------------------------------
+    if (Array.isArray(bu.rows) && bu.rows.length > 0) {
+      // Recompute totals using a PDF-safe function
+      computeBudgetTotalsForPDF(bu.rows);
+
+      // create sorted copy so Total appears last
+      const rows = [...bu.rows].sort((a, b) => {
+        const aT = a.head?.toLowerCase() === "total";
+        const bT = b.head?.toLowerCase() === "total";
+        return aT === bT ? 0 : aT ? 1 : -1;
+      });
+
       const { prevFY, currFY } = getBudgetYearLabels();
 
       const header = [
@@ -1154,6 +1218,7 @@ async function renderAnnexuresSection(doc, state) {
       ]);
 
       const startY = state.cursorY + 8;
+
       doc.autoTable({
         head: [header],
         body,
@@ -1167,21 +1232,8 @@ async function renderAnnexuresSection(doc, state) {
         },
         theme: "grid",
       });
-      const finalY = doc.lastAutoTable.finalY || startY;
-      state.cursorY = finalY + 16;
-    }
 
-    if (
-      sec.budget_utilization.custom_table &&
-      hasArrayContent(sec.budget_utilization.custom_table.rows)
-    ) {
-      writeSubheading(
-        doc,
-        "Custom Budget Table – " +
-          (sec.budget_utilization.custom_table.name || ""),
-        state
-      );
-      renderXlsxTable(doc, sec.budget_utilization.custom_table.rows, state);
+      state.cursorY = (doc.lastAutoTable.finalY || startY) + 16;
     }
   }
 
@@ -1198,7 +1250,6 @@ async function renderAnnexuresSection(doc, state) {
   ) {
     writeSubheading(doc, "10.3.1 (A) Other Details", state);
 
-    // TEXT
     if (hasText(od.text)) {
       state.cursorY = writeParagraph(
         doc,
@@ -1207,32 +1258,32 @@ async function renderAnnexuresSection(doc, state) {
       );
     }
 
-    // TABLES
-    (od.tables || []).forEach((tbl) => {
-      sectionTables.push(tbl); // defer to global table renderer
-    });
-
-    // FIGURES
-    (od.figures || []).forEach((fig) => {
-      sectionFigures.push(fig); // defer to global figure renderer
-    });
+    (od.tables || []).forEach((tbl) => sectionTables.push(tbl));
+    (od.figures || []).forEach((fig) => sectionFigures.push(fig));
   }
 
   // ---------------------------
   // 10.3.2 Revenue Generation
   // ---------------------------
-
   if (sec.revenue_generation && hasArrayContent(sec.revenue_generation.rows)) {
     writeSubheading(doc, "10.3.2 Revenue Generation", state);
+
+    var baseYear =
+      parseInt(AppState.basic_info?.year, 10) || new Date().getFullYear();
+    var prevFY = baseYear - 1 + "-" + baseYear;
+    var currFY = baseYear + "-" + (baseYear + 1);
+
+    var revenueHeaders = [
+      { key: "head", header: "Head" },
+      { key: "prev", header: "FY (" + prevFY + ")" },
+      { key: "curr", header: "FY (" + currFY + ") upto 31-12-" + baseYear },
+    ];
+
     renderObjectTable(
       doc,
       sec.revenue_generation.rows,
       state,
-      [
-        { key: "head", header: "Head" },
-        { key: "prev", header: "FY (Previous)" },
-        { key: "curr", header: "FY (Current)" },
-      ],
+      revenueHeaders,
       ""
     );
   }
@@ -1393,34 +1444,174 @@ async function renderAnnexuresSection(doc, state) {
     }
   }
 
+  // =====================================
+  // Helper: Calculate totals for Staff Strength (for PDF export)
+  // =====================================
+  function updateStaffTotals(group) {
+    if (!group || !Array.isArray(group.rows)) return;
+
+    var rows = group.rows;
+
+    // Ensure Total row exists
+    var totalRow = rows.find(function (r) {
+      return r && r.category && r.category.toLowerCase() === "total";
+    });
+
+    if (!totalRow) {
+      totalRow = {
+        category: "Total",
+        sanctioned: "0",
+        filled: "0",
+        baseyear: "0",
+      };
+      rows.push(totalRow);
+    }
+
+    var san = 0;
+    var fil = 0;
+    var base = 0;
+
+    rows.forEach(function (r) {
+      if (!r || !r.category || r.category.toLowerCase() === "total") return;
+
+      san += Number(r.sanctioned) || 0;
+      fil += Number(r.filled) || 0;
+      base += Number(r.baseyear) || 0;
+    });
+
+    totalRow.sanctioned = String(san);
+    totalRow.filled = String(fil);
+    totalRow.baseyear = String(base);
+  }
+  // =====================================
   // 10.10 Staff Positions / Appointments / Promotions / Transfers / New joining
+  // =====================================
+
   if (sec.staff_positions) {
-    const sp = sec.staff_positions;
-    const buckets = [
+    var sp = sec.staff_positions;
+
+    // -------------------------
+    // A. Staff Strength (3 tables + Other Staff)
+    // -------------------------
+    if (sp.strength) {
+      var ss = sp.strength;
+
+      var strengthGroups = [
+        { key: "scientific", title: "10.10 Staff Strength – Scientific Staff" },
+        {
+          key: "administrative",
+          title: "10.10 Staff Strength – Administrative Staff",
+        },
+        { key: "technical", title: "10.10 Staff Strength – Technical Staff" },
+      ];
+
+      strengthGroups.forEach(function (g) {
+        var group = ss[g.key];
+        if (!group || !Array.isArray(group.rows) || !group.rows.length) return;
+
+        writeSubheading(doc, g.title, state);
+
+        // Ensure totals before exporting
+        updateStaffTotals(group);
+
+        // Keep total row last
+        group.rows.sort(function (a, b) {
+          var aT = a.category?.toLowerCase() === "total";
+          var bT = b.category?.toLowerCase() === "total";
+          return aT === bT ? 0 : aT ? 1 : -1;
+        });
+
+        // Dynamic base year header
+        var baseYearHeader =
+          state.basic_info && state.basic_info.year
+            ? parseInt(state.basic_info.year, 10)
+            : new Date().getFullYear();
+
+        // Export UI table
+        renderObjectTable(
+          doc,
+          group.rows,
+          state,
+          [
+            { key: "category", header: "Category" },
+            { key: "sanctioned", header: "Sanctioned" },
+            { key: "filled", header: "Filled" },
+            { key: "baseyear", header: String(baseYearHeader) },
+          ],
+          ""
+        );
+      });
+
+      // -------------------------
+      // OTHER STAFF
+      // -------------------------
+      if (Array.isArray(ss.other_staff) && ss.other_staff.length) {
+        var otherList = ss.other_staff.filter(function (it) {
+          return (
+            it &&
+            (hasText(it.note) ||
+              hasArrayContent(it.tables) ||
+              hasArrayContent(it.figures))
+          );
+        });
+
+        if (otherList.length) {
+          writeSubheading(doc, "10.10 Other Staff", state);
+
+          otherList.forEach(function (it, i) {
+            if (hasText(it.note)) {
+              var para = i + 1 + ". " + replaceFigureTableRefs(it.note);
+              state.cursorY = writeParagraph(doc, para, state);
+            }
+
+            (it.figures || []).forEach(function (f) {
+              sectionFigures.push(f);
+            });
+            (it.tables || []).forEach(function (t) {
+              sectionTables.push(t);
+            });
+          });
+        }
+      }
+    }
+
+    // -------------------------
+    // B. Appointments / Promotions / Transfers / New Joining
+    // -------------------------
+
+    var buckets = [
       { key: "appointments", title: "10.10.1 Appointments" },
       { key: "promotions", title: "10.10.2 Promotions" },
       { key: "transfers", title: "10.10.3 Transfers" },
       { key: "new_joining", title: "10.10.4 New Joining" },
     ];
 
-    buckets.forEach((b) => {
-      const list = (sp[b.key] || []).filter(
-        (it) =>
+    buckets.forEach(function (b) {
+      var list = (sp[b.key] || []).filter(function (it) {
+        return (
           it &&
           (hasText(it.note) ||
             hasArrayContent(it.tables) ||
             hasArrayContent(it.figures))
-      );
+        );
+      });
+
       if (!list.length) return;
 
       writeSubheading(doc, b.title, state);
-      list.forEach((it, i) => {
+
+      list.forEach(function (it, i) {
         if (hasText(it.note)) {
-          const para = `${i + 1}. ${replaceFigureTableRefs(it.note)}`;
+          var para = i + 1 + ". " + replaceFigureTableRefs(it.note);
           state.cursorY = writeParagraph(doc, para, state);
         }
-        (it.figures || []).forEach((f) => sectionFigures.push(f));
-        (it.tables || []).forEach((t) => sectionTables.push(t));
+
+        (it.figures || []).forEach(function (f) {
+          sectionFigures.push(f);
+        });
+        (it.tables || []).forEach(function (t) {
+          sectionTables.push(t);
+        });
       });
     });
   }

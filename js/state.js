@@ -120,7 +120,7 @@ window.AppState = {
 
       budget_utilization: {
         rows: [],
-        custom_table: null,
+        custom_tables: [], // ✅ was custom_table earlier
         other_details: {
           text: "",
           tables: [],
@@ -152,6 +152,20 @@ window.AppState = {
       infra_in_progress: [],
 
       staff_positions: {
+        // NEW block: staff strength tables
+        strength: {
+          scientific: {
+            rows: [],
+          },
+          administrative: {
+            rows: [],
+          },
+          technical: {
+            rows: [],
+          },
+          other_staff: [], // free-form notes/tables/figures
+        },
+
         appointments: [],
         promotions: [],
         transfers: [],
