@@ -45,11 +45,13 @@ function loadDraft() {
  **********************************************************/
 function clearDraft() {
   localStorage.removeItem("annual_report_draft");
+
   // reset AppState fully
   Object.keys(AppState.sections).forEach((key) => {
     if (Array.isArray(AppState.sections[key])) AppState.sections[key] = [];
     else AppState.sections[key] = {};
   });
+
   AppState.basic_info = {};
   AppState.local_counters = { figure: 0, table: 0 };
 
@@ -82,16 +84,22 @@ async function submitFinalReport() {
       return;
     }
 
+    // ------------------------------
+    // SUCCESS — AUTO CLEAR DRAFT
+    // ------------------------------
     showStatus("Submitted successfully.", "success");
+
+    if (typeof clearDraft === "function") {
+      // Delay slightly so user sees success message
+      setTimeout(() => clearDraft(), 1200);
+    }
+
+    // button visual feedback
     const btn = document.getElementById("submitBtn");
     if (btn) {
       btn.textContent = "Submitted ✓";
       btn.classList.add("btn-success-state");
-      // revert to normal after a short delay
-      setTimeout(() => {
-        btn.classList.remove("btn-success-state");
-        btn.textContent = "Submit";
-      }, 2000);
+      btn.disabled = true;
     }
   } catch (err) {
     console.error(err);
@@ -158,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // 2. Attach buttons AFTER everything exists
+  // 2. Attach buttons
   document.getElementById("saveDraftBtn")?.addEventListener("click", saveDraft);
   document.getElementById("loadDraftBtn")?.addEventListener("click", loadDraft);
   document
@@ -170,7 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setupAutoSaveOnNavigation();
 
-  // 3. Load first section ONLY AFTER router.js has registered all sections
+  // 3. Load first section AFTER router is ready
   setTimeout(() => {
     const firstItem = document.querySelector(".nav-item");
     if (firstItem) {
