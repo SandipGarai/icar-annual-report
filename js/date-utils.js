@@ -1,10 +1,3 @@
-// js/date-utils.js or bottom of sections.js
-
-/**
- * Calculate duration between two dates (YYYY-MM-DD) as:
- * "X years, Y months, Z days"
- * Returns "" if invalid.
- */
 function calculateYMDDuration(startStr, endStr) {
   if (!startStr || !endStr) return "";
 
@@ -25,6 +18,11 @@ function calculateYMDDuration(startStr, endStr) {
   if (months < 0) {
     years -= 1;
     months += 12;
+  }
+
+  // ⭐ FIX: same-day should count as "1 day"
+  if (years === 0 && months === 0 && days === 0) {
+    return "1 day";
   }
 
   const parts = [];
