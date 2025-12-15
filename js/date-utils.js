@@ -1,3 +1,10 @@
+// js/date-utils.js or bottom of sections.js
+
+/**
+ * Calculate duration between two dates (YYYY-MM-DD) as:
+ * "X years, Y months, Z days"
+ * Returns "" if invalid.
+ */
 function calculateYMDDuration(startStr, endStr) {
   if (!startStr || !endStr) return "";
 
@@ -34,3 +41,4 @@ function calculateYMDDuration(startStr, endStr) {
 }
 
 window.calculateYMDDuration = calculateYMDDuration;
+
